@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sweet/features/auth/login/login_screen.dart';
 import 'package:sweet/features/auth/register/providers/register_provider.dart';
-import 'package:sweet/features/auth/login/screens/login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -133,7 +132,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       child: Column(
                         children: [
-                          _input(_nombreController, 'Nombre'),
+                          _input(_nombreController, 'Nombre usuario'),
                           _input(_apellidoController, 'Apellido'),
                           _input(_emailController, 'Correo electrónico'),
                           _input(_telefonoController, 'Teléfono'),
@@ -156,7 +155,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                               ),
                               child: isLoading
-                                  ? const CircularProgressIndicator(color: Colors.white)
+                                  ? const CircularProgressIndicator(
+                                      color: Colors.white,
+                                    )
                                   : const Text(
                                       'Registrarme',
                                       style: TextStyle(color: Colors.white),
@@ -173,11 +174,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onPressed: () {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (_) => const LoginScreen()),
+                          MaterialPageRoute(
+                            builder: (_) => const LoginScreen(),
+                          ),
                         );
                       },
                       child: const Text("Ir a login"),
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -206,7 +209,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       decoration: InputDecoration(
         labelText: 'Contraseña',
         suffixIcon: IconButton(
-          icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+          icon: Icon(
+            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+          ),
           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
         ),
       ),

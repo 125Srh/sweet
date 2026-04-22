@@ -1,7 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:sweet/features/auth/login/login_screen.dart';
+import 'package:sweet/features/auth/register/screens/register_screen.dart';
+import '../widgets/home_header.dart';
+import '../widgets/category_item.dart';
+import '../widgets/product_card.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  void _showComingSoon(BuildContext context, String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('🚧 $feature - ¡Próximamente!'),
+        backgroundColor: const Color(0xFFFF69B4),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +47,7 @@ class HomeScreen extends StatelessWidget {
             onPressed: () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                MaterialPageRoute(builder: (_) => const RegisterScreen()),
               );
             },
           ),
@@ -42,40 +56,8 @@ class HomeScreen extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            margin: const EdgeInsets.all(20),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFF69B4), Color(0xFFFFB6C1)],
-              ),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '¡Hola, Bella!',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'Descubre nuestras ofertas exclusivas',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.spa, color: Colors.white, size: 50),
-              ],
-            ),
-          ),
+          const HomeHeader(),
+
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Text(
@@ -87,46 +69,49 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
+
           const SizedBox(height: 15),
+
           SizedBox(
             height: 100,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 15),
               children: [
-                _buildCategory(
-                  'Maquillaje',
-                  Icons.face,
-                  const Color(0xFFFFB6C1),
-                  context,
+                CategoryItem(
+                  name: 'Maquillaje',
+                  icon: Icons.face,
+                  color: const Color(0xFFFFB6C1),
+                  onTap: () => _showComingSoon(context, 'Maquillaje'),
                 ),
-                _buildCategory(
-                  'Skincare',
-                  Icons.spa,
-                  const Color(0xFFDDA0DD),
-                  context,
+                CategoryItem(
+                  name: 'Skincare',
+                  icon: Icons.spa,
+                  color: const Color(0xFFDDA0DD),
+                  onTap: () => _showComingSoon(context, 'Skincare'),
                 ),
-                _buildCategory(
-                  'Perfumes',
-                  Icons.wine_bar,
-                  const Color(0xFFFFDAB9),
-                  context,
+                CategoryItem(
+                  name: 'Perfumes',
+                  icon: Icons.wine_bar,
+                  color: const Color(0xFFFFDAB9),
+                  onTap: () => _showComingSoon(context, 'Perfumes'),
                 ),
-                _buildCategory(
-                  'Cabello',
-                  Icons.brush,
-                  const Color(0xFFFFC0CB),
-                  context,
+                CategoryItem(
+                  name: 'Cabello',
+                  icon: Icons.brush,
+                  color: const Color(0xFFFFC0CB),
+                  onTap: () => _showComingSoon(context, 'Cabello'),
                 ),
-                _buildCategory(
-                  'Uñas',
-                  Icons.palette,
-                  const Color(0xFFE6E6FA),
-                  context,
+                CategoryItem(
+                  name: 'Uñas',
+                  icon: Icons.palette,
+                  color: const Color(0xFFE6E6FA),
+                  onTap: () => _showComingSoon(context, 'Uñas'),
                 ),
               ],
             ),
           ),
+
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             child: Text(
@@ -138,59 +123,61 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
+
           Expanded(
             child: GridView.count(
               crossAxisCount: 2,
               padding: const EdgeInsets.all(15),
               childAspectRatio: 0.75,
               children: [
-                _buildProductCard(
-                  'Labial Mate',
-                  '\$25.99',
-                  '⭐ 4.8',
-                  const Color(0xFFFF6B81),
-                  context,
+                ProductCard(
+                  name: 'Labial Mate',
+                  price: '\$25.99',
+                  rating: '⭐ 4.8',
+                  color: const Color(0xFFFF6B81),
+                  onTap: () => _showComingSoon(context, 'Labial Mate'),
                 ),
-                _buildProductCard(
-                  'Serum Facial',
-                  '\$45.50',
-                  '⭐ 4.9',
-                  const Color(0xFF87CEEB),
-                  context,
+                ProductCard(
+                  name: 'Serum Facial',
+                  price: '\$45.50',
+                  rating: '⭐ 4.9',
+                  color: const Color(0xFF87CEEB),
+                  onTap: () => _showComingSoon(context, 'Serum Facial'),
                 ),
-                _buildProductCard(
-                  'Base HD',
-                  '\$38.00',
-                  '⭐ 4.7',
-                  const Color(0xFFFFD700),
-                  context,
+                ProductCard(
+                  name: 'Base HD',
+                  price: '\$38.00',
+                  rating: '⭐ 4.7',
+                  color: const Color(0xFFFFD700),
+                  onTap: () => _showComingSoon(context, 'Base HD'),
                 ),
-                _buildProductCard(
-                  'Perfume Floral',
-                  '\$89.99',
-                  '⭐ 5.0',
-                  const Color(0xFFDDA0DD),
-                  context,
+                ProductCard(
+                  name: 'Perfume Floral',
+                  price: '\$89.99',
+                  rating: '⭐ 5.0',
+                  color: const Color(0xFFDDA0DD),
+                  onTap: () => _showComingSoon(context, 'Perfume Floral'),
                 ),
-                _buildProductCard(
-                  'Paleta de Sombras',
-                  '\$52.00',
-                  '⭐ 4.9',
-                  const Color(0xFFE6E6FA),
-                  context,
+                ProductCard(
+                  name: 'Paleta de Sombras',
+                  price: '\$52.00',
+                  rating: '⭐ 4.9',
+                  color: const Color(0xFFE6E6FA),
+                  onTap: () => _showComingSoon(context, 'Paleta de Sombras'),
                 ),
-                _buildProductCard(
-                  'Crema Hidratante',
-                  '\$34.99',
-                  '⭐ 4.6',
-                  const Color(0xFF98FB98),
-                  context,
+                ProductCard(
+                  name: 'Crema Hidratante',
+                  price: '\$34.99',
+                  rating: '⭐ 4.6',
+                  color: const Color(0xFF98FB98),
+                  onTap: () => _showComingSoon(context, 'Crema Hidratante'),
                 ),
               ],
             ),
           ),
         ],
       ),
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
         selectedItemColor: const Color(0xFFFF69B4),
@@ -211,95 +198,6 @@ class HomeScreen extends StatelessWidget {
             label: 'Perfil',
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildCategory(
-    String name,
-    IconData icon,
-    Color color,
-    BuildContext context,
-  ) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      child: Column(
-        children: [
-          GestureDetector(
-            onTap: () => _showComingSoon(context, name),
-            child: Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.3),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: const Color(0xFFD81B60), size: 30),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(name, style: const TextStyle(fontSize: 12)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProductCard(
-    String name,
-    String price,
-    String rating,
-    Color color,
-    BuildContext context,
-  ) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => _showComingSoon(context, name),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(15),
-                  ),
-                ),
-                child: Center(child: Icon(Icons.spa, size: 50, color: color)),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(rating, style: const TextStyle(fontSize: 12)),
-                Text(
-                  price,
-                  style: const TextStyle(
-                    color: Color(0xFFD81B60),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showComingSoon(BuildContext context, String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('🚧 $feature - ¡Próximamente!'),
-        backgroundColor: const Color(0xFFFF69B4),
-        duration: const Duration(seconds: 2),
       ),
     );
   }
