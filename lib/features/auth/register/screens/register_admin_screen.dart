@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:sweet/features/auth/register/providers/register_provider.dart';
-import 'package:sweet/features/auth/login/screens/login_admin_screen.dart';
 
 class RegisterAdminScreen extends StatefulWidget {
   const RegisterAdminScreen({super.key});
@@ -35,25 +35,26 @@ class _RegisterAdminScreenState extends State<RegisterAdminScreen> {
       data: {
         'nombre': _nombreController.text.trim(),
         'apellido': _apellidoController.text.trim(),
-        'correo electrónico': _emailController.text.trim(),
-        'teléfono': _telefonoController.text.trim(),
-        'dirección': _direccionController.text.trim(),
+        'telefono': _telefonoController.text.trim(),
+        'direccion': _direccionController.text.trim(),
         'rol': 'admin', // 🔥 AQUÍ CAMBIA TODO
-        'activo': true,
-        'creado_en': DateTime.now().toIso8601String(),
-        'actualizado_en': DateTime.now().toIso8601String(),
       },
     );
+    // 👇 DEBUG EN CONSOLA
+    if (error == null) {
+      print("✅ REGISTRO EXITOSO");
+    } else {
+      print("❌ ERROR REGISTER: $error");
+    }
 
     if (error == null) {
       _showSnackBar('✅ Admin registrado correctamente', false);
 
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginAdminScreen()),
-        );
-      }
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) {
+          context.go('/login');
+        }
+      });
     } else {
       _showSnackBar(error, true);
     }
@@ -166,7 +167,9 @@ class _RegisterAdminScreenState extends State<RegisterAdminScreen> {
                                 ),
                               ),
                               child: isLoading
-                                  ? const CircularProgressIndicator(color: Colors.white)
+                                  ? const CircularProgressIndicator(
+                                      color: Colors.white,
+                                    )
                                   : const Text(
                                       'Registrar Admin',
                                       style: TextStyle(color: Colors.white),
@@ -204,7 +207,9 @@ class _RegisterAdminScreenState extends State<RegisterAdminScreen> {
       decoration: InputDecoration(
         labelText: 'Contraseña',
         suffixIcon: IconButton(
-          icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+          icon: Icon(
+            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+          ),
           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
         ),
       ),

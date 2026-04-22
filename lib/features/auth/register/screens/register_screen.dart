@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:sweet/features/auth/login/login_screen.dart';
 import 'package:sweet/features/auth/login/screens/login_page.dart';
 import 'package:sweet/features/auth/register/providers/register_provider.dart';
 
@@ -28,6 +28,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // 🔥 VALIDAR PASSWORDS
+    if (_passwordController.text != _confirmPasswordController.text) {
+      _showSnackBar('Las contraseñas no coinciden', true);
+      return;
+    }
+
     final provider = context.read<RegisterProvider>();
 
     final error = await provider.register(
@@ -36,25 +42,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
       data: {
         'nombre': _nombreController.text.trim(),
         'apellido': _apellidoController.text.trim(),
-        'correo electrónico': _emailController.text.trim(),
-        'teléfono': _telefonoController.text.trim(),
-        'dirección': _direccionController.text.trim(),
-        'rol': 'cliente',
-        'activo': true,
-        'creado_en': DateTime.now().toIso8601String(),
-        'actualizado_en': DateTime.now().toIso8601String(),
+        'telefono': _telefonoController.text.trim(),
+        'direccion': _direccionController.text.trim(),
       },
     );
+    // 👇 DEBUG EN CONSOLA
+    if (error == null) {
+      print("✅ REGISTRO EXITOSO");
+    } else {
+      print("❌ ERROR REGISTER: $error");
+    }
 
     if (error == null) {
-      _showSnackBar('✅ ¡Registro exitoso! Ahora inicia sesión', false);
+      _showSnackBar('✅ Registro exitoso', false);
 
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
-      }
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) {
+          context.go('/login');
+        }
+      });
     } else {
       _showSnackBar(error, true);
     }

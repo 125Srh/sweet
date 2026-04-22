@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sweet/features/auth/login/screens/login_admin_screen.dart';
-import 'package:sweet/features/auth/login/screens/login_screen.dart';
+import 'package:sweet/features/auth/register/screens/register_admin_screen.dart';
 import '../widgets/home_header.dart';
 import '../widgets/category_item.dart';
 import '../widgets/product_card.dart';
@@ -49,7 +48,7 @@ class HomeScreen extends StatelessWidget {
             onPressed: () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const LoginAdminScreen()),
+                MaterialPageRoute(builder: (_) => const RegisterAdminScreen()),
               );
             },
           ),
