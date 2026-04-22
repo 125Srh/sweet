@@ -1,6 +1,7 @@
 import '../services/auth_service.dart';
+
 class AuthProvider {
-   final _service = AuthService();
+  final _service = AuthService();
 
   Future<String> login(String email, String password) async {
     final data = await _service.login(email, password);

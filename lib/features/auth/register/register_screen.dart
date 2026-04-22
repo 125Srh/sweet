@@ -343,7 +343,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          '¿Ya tienes cuenta?',
+                          '¿Ya tienes cuentaa?',
                           style: TextStyle(color: Colors.black54),
                         ),
                         TextButton(

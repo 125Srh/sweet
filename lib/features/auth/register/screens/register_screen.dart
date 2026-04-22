@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sweet/features/auth/login/login_screen.dart';
+import 'package:sweet/features/auth/login/screens/login_page.dart';
 import 'package:sweet/features/auth/register/providers/register_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -159,7 +160,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       color: Colors.white,
                                     )
                                   : const Text(
-                                      'Registrarme',
+                                      'Registrarmee',
                                       style: TextStyle(color: Colors.white),
                                     ),
                             ),
@@ -174,9 +175,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onPressed: () {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(
-                            builder: (_) => const LoginScreen(),
-                          ),
+                          MaterialPageRoute(builder: (_) => const LoginPage()),
                         );
                       },
                       child: const Text("Ir a login"),

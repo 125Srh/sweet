@@ -49,7 +49,6 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
       // 🚀 Navegación futura
       print('Ir a panel ADMIN');
       // context.go('/admin');
-
     } catch (e) {
       _showMessage(e.toString(), true);
     } finally {
@@ -89,8 +88,8 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: LoginForm(
-        title: 'Admin Panel',
+      body: LoginScreen(
+        title: 'Registro Admin',
         subtitle: 'Acceso administrativo',
 
         emailController: _emailController,
@@ -99,7 +98,7 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
         onLogin: _loginAdmin,
 
         // 👇 opcionales
-        onRegister: _goToRegister,
+        //onRegister: _goToRegister,
         onForgotPassword: _forgotPassword,
       ),
     );

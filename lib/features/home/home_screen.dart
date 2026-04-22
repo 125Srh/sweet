@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sweet/features/auth/login/login_screen.dart';
-import 'package:sweet/features/auth/register/screens/register_admin_screen.dart';
 import 'package:sweet/features/auth/register/screens/register_screen.dart';
 
 class HomeScreen extends StatelessWidget {
