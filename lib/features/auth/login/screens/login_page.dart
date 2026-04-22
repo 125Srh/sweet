@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sweet/features/auth/login/providers/auth_provider.dart';
 import 'login_screen.dart';
 
@@ -28,17 +29,17 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => isLoading = true);
 
     try {
-      final rol = await _provider.login(
+      final data = await _provider.login(
         emailController.text.trim(),
         passwordController.text.trim(),
       );
 
       if (!mounted) return;
 
-      if (rol == 'admin') {
-        Navigator.pushReplacementNamed(context, '/admin');
+      if (data['rol'] == 'admin') {
+        context.go('/admin');
       } else {
-        Navigator.pushReplacementNamed(context, '/home');
+        context.go('/home');
       }
     } catch (e) {
       ScaffoldMessenger.of(

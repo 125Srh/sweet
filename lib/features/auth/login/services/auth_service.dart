@@ -15,9 +15,10 @@ class AuthService {
     final userData = await _client
         .from('usuario')
         .select('rol, activo')
-        .eq('identificacion', userId)
+        .eq('id', userId)
         .single();
 
-    return userData;
+    // ✔ aquí puedes devolver limpio (opcional pero recomendado)
+    return {"rol": userData['rol'], "activo": userData['activo']};
   }
 }

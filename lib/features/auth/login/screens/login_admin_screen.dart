@@ -68,9 +68,9 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
   }
 
   // (Opcional)
-  void _goToRegister() {
-    _showMessage('Registro no disponible para admin', true);
-  }
+  // void _goToRegister() {
+  //   _showMessage('Registro no disponible para admin', true);
+  // }
 
   void _forgotPassword() {
     _showMessage('Recuperación de contraseña próximamente', false);
