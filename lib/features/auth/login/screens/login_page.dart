@@ -29,17 +29,19 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => isLoading = true);
 
     try {
-      final data = await _provider.login(
+      final rol = await _provider.login(
         emailController.text.trim(),
         passwordController.text.trim(),
       );
 
       if (!mounted) return;
 
-      if (data['rol'] == 'admin') {
+      if (rol == 'admin') {
         context.go('/admin');
+      } else if (rol == 'cliente') {
+        context.go('/client');
       } else {
-        context.go('/home');
+        throw Exception('Rol no válido');
       }
     } catch (e) {
       ScaffoldMessenger.of(

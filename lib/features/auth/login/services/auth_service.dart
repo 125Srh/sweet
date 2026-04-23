@@ -4,21 +4,39 @@ class AuthService {
   final _client = Supabase.instance.client;
 
   Future<Map<String, dynamic>> login(String email, String password) async {
-    final auth = await _client.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      final auth = await _client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
 
-    final userId = auth.user?.id;
-    if (userId == null) throw Exception('Usuario no encontrado');
+      print("✅ LOGIN AUTH OK: ${auth.user?.email}");
 
-    final userData = await _client
-        .from('usuario')
-        .select('rol, activo')
-        .eq('id', userId)
-        .single();
+      final userId = auth.user?.id;
+      if (userId == null) throw Exception('Usuario no encontrado');
 
-    // ✔ aquí puedes devolver limpio (opcional pero recomendado)
-    return {"rol": userData['rol'], "activo": userData['activo']};
+      final userData = await _client
+          .from('usuario')
+          .select('rol, activo')
+          .eq('id', userId)
+          .maybeSingle();
+
+      print("✅ USER DATA: $userData");
+      print("👉 USER ID AUTH: $userId");
+
+      if (userData == null) {
+        throw Exception('No existe usuario en tabla usuario');
+      }
+      return {"rol": userData['rol'], "activo": userData['activo']};
+    } on AuthException catch (e) {
+      // 🔥 ESTE ES EL IMPORTANTE
+      print("❌ AUTH ERROR: ${e.message}");
+      print("❌ STATUS: ${e.statusCode}");
+      throw Exception(e.message);
+    } catch (e) {
+      print("❌ ERROR GENERAL: $e");
+
+      rethrow;
+    }
   }
 }

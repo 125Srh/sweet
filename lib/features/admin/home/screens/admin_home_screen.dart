@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AdminHomeScreen extends StatelessWidget {
   const AdminHomeScreen({super.key});
@@ -19,13 +21,20 @@ class AdminHomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, color: Color(0xFFFF69B4)),
-            onPressed: () {
+            onPressed: () async {
+              await Supabase.instance.client.auth.signOut();
+
+              if (!context.mounted) return;
+
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('🚪 Cerrando sesión...'),
+                  content: Text('🚪 Sesión cerrada'),
                   backgroundColor: Color(0xFFFF69B4),
                 ),
               );
+
+              // 🔥 redirigir al login
+              context.go('/home');
             },
           ),
         ],
