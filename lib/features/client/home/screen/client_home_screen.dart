@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import 'package:sweet/features/client/home/widget/client_category_item.dart';
-import 'package:sweet/features/client/home/widget/client_product_card.dart';
+import '../widget/client_category_item.dart';
+import '../widget/client_product_card.dart';
 
 class ClientHomeScreen extends StatelessWidget {
   const ClientHomeScreen({super.key});
@@ -46,19 +45,40 @@ class ClientHomeScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout, color: Color(0xFFFF69B4)),
             onPressed: () async {
-              await Supabase.instance.client.auth.signOut();
-
-              if (!context.mounted) return;
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('🚪 Sesión cerrada'),
-                  backgroundColor: Color(0xFFFF69B4),
+              final confirmar = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Cerrar sesión'),
+                  content: const Text(
+                    '¿Estás segura que deseas salir de Sweet?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Cancelar'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text(
+                        'Salir',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ],
                 ),
               );
 
-              // 🔥 redirigir al login
-              context.go('/home');
+              if (confirmar == true) {
+                await Supabase.instance.client.auth.signOut();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('🚪 Sesión cerrada'),
+                    backgroundColor: Color(0xFFFF69B4),
+                  ),
+                );
+                context.go('/login');
+              }
             },
           ),
         ],
@@ -77,9 +97,7 @@ class ClientHomeScreen extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 15),
-
           SizedBox(
             height: 100,
             child: ListView(
@@ -119,7 +137,6 @@ class ClientHomeScreen extends StatelessWidget {
               ],
             ),
           ),
-
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             child: Text(
@@ -131,7 +148,6 @@ class ClientHomeScreen extends StatelessWidget {
               ),
             ),
           ),
-
           Expanded(
             child: GridView.count(
               crossAxisCount: 2,
@@ -185,7 +201,6 @@ class ClientHomeScreen extends StatelessWidget {
           ),
         ],
       ),
-
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
         selectedItemColor: const Color(0xFFFF69B4),
