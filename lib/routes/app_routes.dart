@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:sweet/features/admin/home/screens/admin_home_screen.dart';
+import 'package:sweet/features/admin/sarahi/admin2/products_screen.dart';
 import 'package:sweet/features/auth/login/screens/login_page.dart';
 import 'package:sweet/features/client/home/screen/client_home_screen.dart';
 import 'package:sweet/features/public/home/screens/home_screen.dart';
@@ -16,6 +17,10 @@ final router = GoRouter(
     GoRoute(
       path: '/client',
       builder: (contex, state) => const ClientHomeScreen(),
+    ),
+    GoRoute(
+      path: '/admin2',
+      builder: (context, state) => const ProductsScreen(),
     ),
   ],
 );
