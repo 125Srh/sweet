@@ -5,6 +5,7 @@ import 'routes/app_routes.dart';
 
 import 'package:provider/provider.dart';
 import 'package:sweet/features/auth/register/providers/register_provider.dart';
+import 'package:sweet/features/admin/home/providers/admin_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +18,10 @@ void main() async {
 
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => RegisterProvider())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => RegisterProvider()),
+        ChangeNotifierProvider(create: (_) => AdminsProvider()),
+      ],
       child: const SweetApp(),
     ),
   );

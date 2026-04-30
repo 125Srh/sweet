@@ -37,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
 
       if (rol == 'admin') {
-        context.go('/admin2');
+        context.go('/admin');
       } else if (rol == 'cliente') {
         context.go('/client');
       } else {

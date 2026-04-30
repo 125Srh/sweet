@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:sweet/features/auth/login/screens/login_page.dart';
 import 'package:sweet/features/auth/register/providers/register_provider.dart';
 
 class RegisterAdminScreen extends StatefulWidget {
@@ -178,6 +179,17 @@ class _RegisterAdminScreenState extends State<RegisterAdminScreen> {
                           ),
                         ],
                       ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const LoginPage()),
+                        );
+                      },
+                      child: const Text("Ir a login"),
                     ),
                   ],
                 ),
