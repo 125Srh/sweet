@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../providers/admin_provider.dart';
+import 'package:sweet/features/admin/home/providers/admin_provider.dart';
+import '../widgets/admin_form.dart';
 
 class AdminList extends StatelessWidget {
   final AdminsProvider provider;
@@ -12,22 +13,40 @@ class AdminList extends StatelessWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (provider.filteredAdmins.isEmpty) {
-      return const Center(child: Text('No hay admins registrados'));
+    if (provider.filteredProductos.isEmpty) {
+      return const Center(child: Text('No hay productos registrados'));
     }
 
     return ListView.builder(
-      itemCount: provider.filteredAdmins.length,
+      itemCount: provider.filteredProductos.length,
       itemBuilder: (_, i) {
-        final admin = provider.filteredAdmins[i];
+        final producto = provider.filteredProductos[i];
 
         return ListTile(
-          leading: const Icon(Icons.person),
-          title: Text(admin['nombre'] ?? ''),
-          subtitle: Text(admin['codigo'] ?? ''),
-          trailing: IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: () {},
+          leading: const Icon(Icons.shopping_bag),
+          title: Text(producto['nombre'] ?? ''),
+          subtitle: Text(producto['descripcion'] ?? ''),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.edit, color: Colors.blue),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AdminForm(producto: producto),
+                    ),
+                  );
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () {
+                  provider.eliminarProducto(producto['id'].toString());
+                },
+              ),
+            ],
           ),
         );
       },

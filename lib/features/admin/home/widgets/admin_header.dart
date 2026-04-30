@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sweet/features/admin/home/widgets/admin_form.dart';
 
 class AdminHeader extends StatelessWidget {
   const AdminHeader({super.key});
@@ -26,7 +27,12 @@ class AdminHeader extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdminForm()),
+                );
+              },
               icon: const Icon(Icons.add),
               label: const Text('Registrar Producto'),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green),

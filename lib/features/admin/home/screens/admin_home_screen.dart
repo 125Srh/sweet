@@ -19,7 +19,9 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => context.read<AdminsProvider>().cargarAdminos());
+    Future.microtask(
+      () => context.read<AdminsProvider>().cargarCategoriasYMarcas(),
+    );
   }
 
   @override

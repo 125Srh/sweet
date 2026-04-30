@@ -16,7 +16,7 @@ class AdminFooter extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Total: ${provider.filteredAdmins.length} productos',
+            'Total: ${provider.categorias.length} productos',
             style: TextStyle(color: Colors.grey[700], fontSize: 12),
           ),
           Text(
