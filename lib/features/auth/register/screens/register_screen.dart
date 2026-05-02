@@ -56,13 +56,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (error == null) {
       _showSnackBar('✅ Registro exitoso', false);
 
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) {
-          context.go('/login');
-        }
-      });
-    } else {
-      _showSnackBar(error, true);
+      if (!mounted) return;
+
+      context.go('/login');
     }
   }
 

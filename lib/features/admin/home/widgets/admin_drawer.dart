@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AdminDrawer extends StatelessWidget {
   const AdminDrawer({super.key});
@@ -12,6 +14,7 @@ class AdminDrawer extends StatelessWidget {
       String title, {
       bool selected = false,
       Color? color,
+      VoidCallback? onTap,
     }) {
       return ListTile(
         leading: Icon(
@@ -26,7 +29,7 @@ class AdminDrawer extends StatelessWidget {
           ),
         ),
         tileColor: selected ? pinkColor.withOpacity(0.1) : null,
-        onTap: () {},
+        onTap: onTap,
       );
     }
 
@@ -66,7 +69,43 @@ class AdminDrawer extends StatelessWidget {
           const Spacer(),
           const Divider(),
           item(Icons.settings, 'Configuración'),
-          item(Icons.logout, 'Cerrar Sesión', color: Colors.red),
+          item(
+            Icons.logout,
+            'Cerrar Sesión',
+            color: Colors.red,
+            onTap: () async {
+              final confirmar = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Cerrar sesión'),
+                  content: const Text(
+                    '¿Estás segura que deseas salir de Sweet?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Cancelar'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text(
+                        'Salir',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirmar == true) {
+                await Supabase.instance.client.auth.signOut();
+
+                if (!context.mounted) return;
+
+                context.go('/login'); // redirección
+              }
+            },
+          ),
         ],
       ),
     );
