@@ -3,10 +3,17 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widget/client_category_item.dart';
 import '../widget/client_product_card.dart';
+import 'package:provider/provider.dart';
+import '../provider/client_provider.dart';
 
-class ClientHomeScreen extends StatelessWidget {
+class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
 
+  @override
+  State<ClientHomeScreen> createState() => _ClientHomeScreenState();
+}
+
+class _ClientHomeScreenState extends State<ClientHomeScreen> {
   void _showComingSoon(BuildContext context, String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -14,6 +21,14 @@ class ClientHomeScreen extends StatelessWidget {
         backgroundColor: const Color(0xFFFF69B4),
         duration: const Duration(seconds: 2),
       ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(
+      () => Provider.of<ClientProvider>(context, listen: false).init(),
     );
   }
 
@@ -83,9 +98,11 @@ class ClientHomeScreen extends StatelessWidget {
           ),
         ],
       ),
+
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 🟣 CATEGORÍAS
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Text(
@@ -98,45 +115,54 @@ class ClientHomeScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 15),
+
           SizedBox(
             height: 100,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              children: [
-                ClientCategoryItem(
-                  name: 'Maquillaje',
-                  icon: Icons.face,
-                  color: const Color(0xFFFFB6C1),
-                  onTap: () => _showComingSoon(context, 'Maquillaje'),
-                ),
-                ClientCategoryItem(
-                  name: 'Skincare',
-                  icon: Icons.spa,
-                  color: const Color(0xFFDDA0DD),
-                  onTap: () => _showComingSoon(context, 'Skincare'),
-                ),
-                ClientCategoryItem(
-                  name: 'Perfumes',
-                  icon: Icons.wine_bar,
-                  color: const Color(0xFFFFDAB9),
-                  onTap: () => _showComingSoon(context, 'Perfumes'),
-                ),
-                ClientCategoryItem(
-                  name: 'Cabello',
-                  icon: Icons.brush,
-                  color: const Color(0xFFFFC0CB),
-                  onTap: () => _showComingSoon(context, 'Cabello'),
-                ),
-                ClientCategoryItem(
-                  name: 'Uñas',
-                  icon: Icons.palette,
-                  color: const Color(0xFFE6E6FA),
-                  onTap: () => _showComingSoon(context, 'Uñas'),
-                ),
-              ],
+            child: Consumer<ClientProvider>(
+              builder: (context, provider, child) {
+                if (provider.categories.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                return ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  itemCount: provider.categories.length,
+                  itemBuilder: (context, index) {
+                    final cat = provider.categories[index];
+
+                    final colors = [
+                      Color(0xFFFFB6C1),
+                      Color(0xFFDDA0DD),
+                      Color(0xFFFFDAB9),
+                      Color(0xFFFFC0CB),
+                      Color(0xFFE6E6FA),
+                    ];
+
+                    final icons = [
+                      Icons.face,
+                      Icons.spa,
+                      Icons.wine_bar,
+                      Icons.brush,
+                      Icons.palette,
+                    ];
+
+                    return ClientCategoryItem(
+                      name: cat['nombre'],
+                      icon: icons[index % icons.length],
+                      color: colors[index % colors.length],
+                      onTap: () {
+                        context.read<ClientProvider>().filterByCategory(
+                          cat['id'],
+                        );
+                      },
+                    );
+                  },
+                );
+              },
             ),
           ),
+
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             child: Text(
@@ -148,59 +174,72 @@ class ClientHomeScreen extends StatelessWidget {
               ),
             ),
           ),
+
+          // 🔥 PRODUCTOS
           Expanded(
-            child: GridView.count(
-              crossAxisCount: 2,
-              padding: const EdgeInsets.all(15),
-              childAspectRatio: 0.75,
-              children: [
-                ClientProductCard(
-                  name: 'Labial Mate',
-                  price: '\$25.99',
-                  rating: '⭐ 4.8',
-                  color: const Color(0xFFFF6B81),
-                  onTap: () => _showComingSoon(context, 'Labial Mate'),
-                ),
-                ClientProductCard(
-                  name: 'Serum Facial',
-                  price: '\$45.50',
-                  rating: '⭐ 4.9',
-                  color: const Color(0xFF87CEEB),
-                  onTap: () => _showComingSoon(context, 'Serum Facial'),
-                ),
-                ClientProductCard(
-                  name: 'Base HD',
-                  price: '\$38.00',
-                  rating: '⭐ 4.7',
-                  color: const Color(0xFFFFD700),
-                  onTap: () => _showComingSoon(context, 'Base HD'),
-                ),
-                ClientProductCard(
-                  name: 'Perfume Floral',
-                  price: '\$89.99',
-                  rating: '⭐ 5.0',
-                  color: const Color(0xFFDDA0DD),
-                  onTap: () => _showComingSoon(context, 'Perfume Floral'),
-                ),
-                ClientProductCard(
-                  name: 'Paleta de Sombras',
-                  price: '\$52.00',
-                  rating: '⭐ 4.9',
-                  color: const Color(0xFFE6E6FA),
-                  onTap: () => _showComingSoon(context, 'Paleta de Sombras'),
-                ),
-                ClientProductCard(
-                  name: 'Crema Hidratante',
-                  price: '\$34.99',
-                  rating: '⭐ 4.6',
-                  color: const Color(0xFF98FB98),
-                  onTap: () => _showComingSoon(context, 'Crema Hidratante'),
-                ),
-              ],
+            child: Consumer<ClientProvider>(
+              builder: (context, provider, child) {
+                if (provider.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (provider.products.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.inbox, size: 60, color: Colors.grey),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'No hay productos en esta categoría',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 10),
+                        TextButton(
+                          onPressed: () {
+                            provider.resetProducts();
+                          },
+                          child: const Text(
+                            'ver todos',
+                            style: TextStyle(color: Color(0xFFD81B60)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return GridView.builder(
+                  itemCount: provider.products.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.75,
+                  ),
+                  itemBuilder: (context, index) {
+                    final product = provider.products[index];
+
+                    return ClientProductCard(
+                      name: product['nombre'],
+                      price: '\$${product['precio']}',
+                      rating: '⭐ 5.0',
+                      imageUrl: product['imagen_url'],
+                      color: [
+                        Color(0xFFFF6B81),
+                        Color(0xFF87CEEB),
+                        Color(0xFFFFD700),
+                        Color(0xFFDDA0DD),
+                        Color(0xFF98FB98),
+                      ][index % 5],
+                      onTap: () {},
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],
       ),
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
         selectedItemColor: const Color(0xFFFF69B4),

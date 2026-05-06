@@ -5,6 +5,7 @@ class ClientProductCard extends StatelessWidget {
   final String price;
   final String rating;
   final Color color;
+  final String? imageUrl;
   final VoidCallback onTap;
 
   const ClientProductCard({
@@ -13,6 +14,7 @@ class ClientProductCard extends StatelessWidget {
     required this.price,
     required this.rating,
     required this.color,
+    required this.imageUrl,
     required this.onTap,
   });
 
@@ -27,15 +29,28 @@ class ClientProductCard extends StatelessWidget {
           Expanded(
             child: GestureDetector(
               onTap: onTap,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(15),
-                  ),
-                ),
-                child: Center(child: Icon(Icons.spa, size: 50, color: color)),
-              ),
+              child: imageUrl?.isNotEmpty == true
+                  ? ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(15),
+                      ),
+                      child: Image.network(
+                        imageUrl!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+
+                        // 🔥 loading mientras carga
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(child: CircularProgressIndicator());
+                        },
+
+                        errorBuilder: (context, error, stackTrace) {
+                          return _buildFallback();
+                        },
+                      ),
+                    )
+                  : _buildFallback(),
             ),
           ),
           Padding(
@@ -58,6 +73,17 @@ class ClientProductCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  // 🔥 Fallback (diseño original con icono)
+  Widget _buildFallback() {
+    return Container(
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.2),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+      ),
+      child: Center(child: Icon(Icons.spa, size: 50, color: color)),
     );
   }
 }

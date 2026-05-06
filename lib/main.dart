@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sweet/features/client/home/provider/client_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'routes/app_routes.dart';
 
@@ -21,6 +22,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => RegisterProvider()),
         ChangeNotifierProvider(create: (_) => AdminsProvider()),
+        ChangeNotifierProvider(create: (_) => ClientProvider()),
       ],
       child: const SweetApp(),
     ),
