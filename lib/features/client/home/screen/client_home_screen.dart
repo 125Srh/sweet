@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:sweet/features/client/home/screen/client_detail_screen.dart';
 import '../widget/client_category_item.dart';
 import '../widget/client_product_card.dart';
 import 'package:provider/provider.dart';
@@ -27,9 +28,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(
-      () => Provider.of<ClientProvider>(context, listen: false).init(),
-    );
+    Future.microtask(() => context.read<ClientProvider>().init());
   }
 
   @override
@@ -120,10 +119,6 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             height: 100,
             child: Consumer<ClientProvider>(
               builder: (context, provider, child) {
-                if (provider.categories.isEmpty) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
                 return ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -175,7 +170,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             ),
           ),
 
-          // 🔥 PRODUCTOS
+          // 🔥 PRODUCTOS (SOLO ESTA PARTE SE ACTUALIZA)
           Expanded(
             child: Consumer<ClientProvider>(
               builder: (context, provider, child) {
@@ -197,7 +192,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                         const SizedBox(height: 10),
                         TextButton(
                           onPressed: () {
-                            provider.resetProducts();
+                            context.read<ClientProvider>().resetProducts();
                           },
                           child: const Text(
                             'ver todos',
@@ -230,7 +225,15 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                         Color(0xFFDDA0DD),
                         Color(0xFF98FB98),
                       ][index % 5],
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                ClientDetailScreen(product: product),
+                          ),
+                        );
+                      },
                     );
                   },
                 );
