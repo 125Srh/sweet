@@ -7,11 +7,11 @@ import 'routes/app_routes.dart';
 import 'package:provider/provider.dart';
 import 'package:sweet/features/auth/register/providers/register_provider.dart';
 import 'package:sweet/features/admin/home/providers/admin_provider.dart';
+import 'package:sweet/features/client/cart/provider/cart_provider.dart'; // ← añadido
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 👇 INICIALIZAR SUPABASE (OBLIGATORIO)
   await Supabase.initialize(
     url: 'https://olknfwrgwfxufjmrrdpk.supabase.co',
     anonKey: 'sb_publishable_UA-j1pS5YTaaAReVTOnWSQ_ZA6gS4Ce',
@@ -23,6 +23,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => RegisterProvider()),
         ChangeNotifierProvider(create: (_) => AdminsProvider()),
         ChangeNotifierProvider(create: (_) => ClientProvider()),
+        ChangeNotifierProvider(create: (_) => CartProvider()), // ← añadido
       ],
       child: const SweetApp(),
     ),
