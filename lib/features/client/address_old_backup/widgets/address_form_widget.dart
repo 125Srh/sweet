@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/address_provider.dart';
 import '../../cart/provider/cart_provider.dart';
-import '../../checkout/screen/checkout_screen.dart';
 
 
 

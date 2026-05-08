@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../provider/cart_provider.dart';
-import '../../address_old_backup/screens/address_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -662,16 +661,7 @@ class _CartScreenState extends State<CartScreen> {
           width: double.infinity,
           height: 54,
           child: ElevatedButton.icon(
-            onPressed: cart.items.isEmpty 
-                ? null 
-                : () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AddressScreen(),
-                      ),
-                    );
-                  },
+            onPressed: cart.items.isEmpty ? null : () => _showSoon('Checkout'),
             icon: const Icon(Icons.payment_rounded, color: Colors.white),
             label: const Text(
               'Proceder al pago',
@@ -697,6 +687,7 @@ class _CartScreenState extends State<CartScreen> {
   );
 }
 
+// ── Widget de cantidad editable inline ───────────────────────
 class _EditableQuantity extends StatefulWidget {
   final int cantidad;
   final int stock;
