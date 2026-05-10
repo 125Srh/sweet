@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/address_provider.dart';
 import '../../cart/provider/cart_provider.dart';
-
-
+import '../../pay/screen/pay_screen.dart';
+import '../../pay/provider/pay_provider.dart';
 
 class AddressFormWidget extends StatelessWidget {
   const AddressFormWidget({super.key});
@@ -175,33 +175,39 @@ class AddressFormWidget extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: provider.isLoading
                             ? null
-                            : () {
+                            : () async {
                                 if (provider.validateForm()) {
-                                  // Obtener datos de dirección
-                                  final addressData = {
-                                    'direccion': provider.direccionController.text.trim(),
-                                    'referencias': provider.referenciasController.text.trim(),
-                                    'celular': provider.celularController.text.trim(),
-                                  };
+                                  // Guardar dirección primero
+                                  final success = await provider.guardarDireccion();
                                   
-                                  // Obtener datos del carrito
-                                  final cartProvider = context.read<CartProvider>();
-                                  
-                                  // Navegar al checkout
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => CheckoutScreen(),
-                                      settings: RouteSettings(
-                                        arguments: {
-                                          'subtotal': cartProvider.subtotal,
-                                          'totalItems': cartProvider.totalItems,
-                                          'items': cartProvider.items,
-                                          'direccion': addressData,
-                                        },
+                                  if (success && context.mounted) {
+                                    // Obtener datos del formulario
+                                    final direccionCompleta = provider.direccionController.text.trim();
+                                    final referencia = provider.referenciasController.text.trim();
+                                    final celular = provider.celularController.text.trim();
+                                    
+                                    // Navegar a la pantalla de pago con Provider incluido
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ChangeNotifierProvider(
+                                          create: (_) => PayProvider(),
+                                          child: PayScreen(
+                                            direccionCompleta: direccionCompleta,
+                                            referencia: referencia,
+                                            celular: celular,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  );
+                                    );
+                                  } else if (context.mounted && provider.error != null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('❌ Error: ${provider.error}'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
                                 }
                               },
                         style: ElevatedButton.styleFrom(

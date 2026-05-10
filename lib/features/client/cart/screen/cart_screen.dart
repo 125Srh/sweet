@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../provider/cart_provider.dart';
+import '/features/client/address_old_backup/screens/address_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -661,7 +662,17 @@ class _CartScreenState extends State<CartScreen> {
           width: double.infinity,
           height: 54,
           child: ElevatedButton.icon(
-            onPressed: cart.items.isEmpty ? null : () => _showSoon('Checkout'),
+            onPressed: cart.items.isEmpty 
+                ? null 
+                : () {
+                    // ← MODIFICADO: Redirecciona a AddressScreen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddressScreen(),
+                      ),
+                    );
+                  },
             icon: const Icon(Icons.payment_rounded, color: Colors.white),
             label: const Text(
               'Proceder al pago',

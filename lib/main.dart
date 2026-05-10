@@ -9,6 +9,8 @@ import 'package:sweet/features/auth/register/providers/register_provider.dart';
 import 'package:sweet/features/admin/home/providers/admin_provider.dart';
 import 'package:sweet/features/client/cart/provider/cart_provider.dart'; // ← añadido
 
+import 'package:sweet/features/client/address_old_backup/providers/address_provider.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -23,6 +25,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => RegisterProvider()),
         ChangeNotifierProvider(create: (_) => AdminsProvider()),
         ChangeNotifierProvider(create: (_) => ClientProvider()),
+        ChangeNotifierProvider(create: (_) => AddressProvider()), // ← SOLO AGREGAR ESTA LÍNEAsarahi
         ChangeNotifierProvider(create: (_) => CartProvider()), // ← añadido
       ],
       child: const SweetApp(),
