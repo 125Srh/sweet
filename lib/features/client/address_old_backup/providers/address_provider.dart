@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../services/address_service.dart';
+import '../services/address_service_supabase.dart';
 
 class AddressProvider extends ChangeNotifier {
-  final AddressService _addressService = AddressService();
+  final AddressServiceSupabase _addressService = AddressServiceSupabase();
   
   bool _isLoading = false;
   String? _error;

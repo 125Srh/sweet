@@ -8,33 +8,19 @@ class AddressServiceSupabase {
       final user = _supabase.auth.currentUser;
       if (user == null) return false;
       
-      final pedidoExistente = await _supabase
-          .from('pedido')
-          .select()
-          .eq('usuario_id', user.id)
-          .eq('estado', 'pendiente')
-          .maybeSingle();
+      await _supabase.auth.updateUser(
+        UserAttributes(
+          data: {
+            'direccion': address['direccion'],
+            'referencias': address['referencias'],
+            'celular': address['celular'],
+          },
+        ),
+      );
       
-      if (pedidoExistente == null) {
-        await _supabase.from('pedido').insert({
-          'usuario_id': user.id,
-          'direccion_entrega': address['direccion'],
-          'notas': address['referencias'],
-          'telefono_receptor': address['celular'],
-          'estado': 'pendiente',
-          'subtotal': 0,
-          'total': 0,
-        });
-      } else {
-        await _supabase.from('pedido').update({
-          'direccion_entrega': address['direccion'],
-          'notas': address['referencias'],
-          'telefono_receptor': address['celular'],
-        }).eq('id', pedidoExistente['id']);
-      }
       return true;
     } catch (e) {
-      print('Error: $e');
+      print('Error guardando dirección en Supabase Auth: $e');
       return false;
     }
   }
@@ -44,21 +30,39 @@ class AddressServiceSupabase {
       final user = _supabase.auth.currentUser;
       if (user == null) return null;
       
-      final pedido = await _supabase
+      // 1. Intentar cargar desde los metadatos del usuario (almacenamiento permanente real)
+      final metadata = user.userMetadata;
+      if (metadata != null && metadata.containsKey('direccion') && metadata['direccion'].toString().isNotEmpty) {
+        return {
+          'direccion': metadata['direccion'] ?? '',
+          'referencias': metadata['referencias'] ?? '',
+          'celular': metadata['celular'] ?? '',
+        };
+      }
+      
+      // 2. Si no hay en metadatos, buscar en su último pedido para migrar/autocompletar
+      final pedidoList = await _supabase
           .from('pedido')
-          .select()
+          .select('direccion_entrega, notas, telefono_receptor')
           .eq('usuario_id', user.id)
-          .eq('estado', 'pendiente')
-          .maybeSingle();
+          .order('id', ascending: false)
+          .limit(1);
       
-      if (pedido == null) return null;
+      if (pedidoList.isNotEmpty) {
+        final pedido = pedidoList.first;
+        final dbAddress = {
+          'direccion': pedido['direccion_entrega'] ?? '',
+          'referencias': pedido['notas'] ?? '',
+          'celular': pedido['telefono_receptor'] ?? '',
+        };
+        // Migrar a metadatos para la próxima vez
+        await saveAddress(dbAddress);
+        return dbAddress;
+      }
       
-      return {
-        'direccion': pedido['direccion_entrega'] ?? '',
-        'referencias': pedido['notas'] ?? '',
-        'celular': pedido['telefono_receptor'] ?? '',
-      };
+      return null;
     } catch (e) {
+      print('Error obteniendo dirección guardada de Supabase: $e');
       return null;
     }
   }
