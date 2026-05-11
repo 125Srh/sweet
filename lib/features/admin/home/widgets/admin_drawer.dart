@@ -60,11 +60,38 @@ class AdminDrawer extends StatelessWidget {
             ),
           ),
 
-          item(Icons.dashboard_outlined, 'Inicio'),
-          item(Icons.admin_panel_settings, 'Admins', selected: true),
-          item(Icons.people_outline, 'Clientes'),
-          item(Icons.shopping_cart_outlined, 'Ventas'),
-          item(Icons.bar_chart_outlined, 'Reportes'),
+          item(
+            Icons.dashboard_outlined,
+            'Inicio',
+            onTap: () {
+              Navigator.pop(context);
+              context.go('/admin');
+            },
+          ),
+          item(
+            Icons.admin_panel_settings,
+            'Admins',
+            selected: true,
+            onTap: () => Navigator.pop(context),
+          ),
+          item(
+            Icons.people_outline,
+            'Clientes',
+            onTap: () => Navigator.pop(context),
+          ),
+          item(
+            Icons.shopping_cart_outlined,
+            'Ventas',
+            onTap: () => Navigator.pop(context),
+          ),
+          item(
+            Icons.bar_chart_outlined,
+            'Reportes',
+            onTap: () {
+              Navigator.pop(context);
+              context.go('/admin2?tab=reportes');
+            },
+          ),
 
           const Spacer(),
           const Divider(),

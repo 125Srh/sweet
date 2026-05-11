@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
+import '../screens/reporte_ventas_screen.dart';
 
 class ProductsScreen extends StatefulWidget {
-  const ProductsScreen({super.key});
+  const ProductsScreen({super.key, this.initialMenuIndex = 1});
+
+  /// Índice del menú lateral al abrir (p. ej. 4 = Reportes vía `/admin2?tab=reportes`).
+  final int initialMenuIndex;
 
   @override
   State<ProductsScreen> createState() => _ProductsScreenState();
@@ -13,14 +17,23 @@ class _ProductsScreenState extends State<ProductsScreen> {
   List<Map<String, dynamic>> _productos = [];
   String _searchQuery = '';
   bool _isLoading = true;
-  int _selectedIndex = 1;
+  late int _selectedIndex;
 
   final Color _pinkColor = const Color.fromARGB(255, 255, 19, 98);
 
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialMenuIndex;
     _cargarProductos();
+  }
+
+  @override
+  void didUpdateWidget(covariant ProductsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialMenuIndex != widget.initialMenuIndex) {
+      setState(() => _selectedIndex = widget.initialMenuIndex);
+    }
   }
 
   Future<void> _cargarProductos() async {
@@ -30,6 +43,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
       _productos = productos;
       _isLoading = false;
     });
+  }
+
+  void _cambiarPantalla(int index) {
+    setState(() => _selectedIndex = index);
   }
 
   List<Map<String, dynamic>> get _filteredProducts {
@@ -109,10 +126,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
           style: TextStyle(color: color ?? Colors.white, fontSize: 14),
         ),
         dense: true,
-        onTap: () {
-          setState(() => _selectedIndex = index);
-          _showMessage('Pantalla de $title');
-        },
+        onTap: () => _cambiarPantalla(index),
       ),
     );
   }
@@ -173,9 +187,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
       ),
       tileColor: isSelected ? _pinkColor.withOpacity(0.1) : null,
       onTap: () {
-        setState(() => _selectedIndex = index);
+        _cambiarPantalla(index);
         Navigator.pop(context);
-        _showMessage('Pantalla de $title');
       },
     );
   }
@@ -197,9 +210,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
-            'Productos',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+          Text(
+            _selectedIndex == 4 ? 'Reportes de Ventas' : 'Productos',
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -431,9 +444,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
       // ========== MODO CELULAR: AppBar con menú hamburguesa ==========
       return Scaffold(
         appBar: AppBar(
-          title: const Text(
-            'MiTienda',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          title: Text(
+            _selectedIndex == 4 ? 'Reportes de Ventas' : 'MiTienda',
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           backgroundColor: _pinkColor,
           elevation: 0,
@@ -489,7 +502,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
           ],
         ),
         drawer: _buildDrawer(),
-        body: _buildMainContent(),
+        body: _selectedIndex == 4 ? const ReporteVentasScreen() : _buildMainContent(),
       );
     } else {
       // ========== MODO LAPTOP/TABLET: Menú lateral estático ==========
@@ -501,7 +514,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
               child: Column(
                 children: [
                   _buildDesktopNavBar(),
-                  Expanded(child: _buildMainContent()),
+                  Expanded(
+                    child: _selectedIndex == 4 ? const ReporteVentasScreen() : _buildMainContent(),
+                  ),
                 ],
               ),
             ),

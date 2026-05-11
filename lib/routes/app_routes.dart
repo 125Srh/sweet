@@ -20,7 +20,11 @@ final router = GoRouter(
     ),
     GoRoute(
       path: '/admin2',
-      builder: (context, state) => const ProductsScreen(),
+      builder: (context, state) {
+        final tab = state.uri.queryParameters['tab'];
+        final initialIndex = tab == 'reportes' ? 4 : 1;
+        return ProductsScreen(initialMenuIndex: initialIndex);
+      },
     ),
   ],
 );

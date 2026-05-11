@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
+import 'reporte_ventas_screen.dart';
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
@@ -14,6 +15,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
   String _searchQuery = '';
   bool _isLoading = true;
   int _selectedIndex = 1;
+  
+  // AÑADIR ESTA VARIABLE
+  Widget _currentScreen = const SizedBox();
 
   final Color _pinkColor = const Color.fromARGB(255, 255, 19, 98);
 
@@ -21,6 +25,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   void initState() {
     super.initState();
     _cargarProductos();
+    _currentScreen = _buildMainContent(); // AÑADIR ESTA LÍNEA
   }
 
   Future<void> _cargarProductos() async {
@@ -38,6 +43,18 @@ class _ProductsScreenState extends State<ProductsScreen> {
         product['nombre'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
         product['codigo'].toString().toLowerCase().contains(_searchQuery.toLowerCase())
     ).toList();
+  }
+
+  // AÑADIR ESTE MÉTODO PARA CAMBIAR DE PANTALLA
+  void _cambiarPantalla(int index) {
+    setState(() {
+      _selectedIndex = index;
+      if (index == 4) {
+        _currentScreen = const ReporteVentasScreen();
+      } else {
+        _currentScreen = _buildMainContent();
+      }
+    });
   }
 
   // ========== MENÚ LATERAL ESTÁTICO (para LAPTOP) ==========
@@ -110,8 +127,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
         ),
         dense: true,
         onTap: () {
-          setState(() => _selectedIndex = index);
-          _showMessage('Pantalla de $title');
+          _cambiarPantalla(index); // MODIFICADO
         },
       ),
     );
@@ -173,9 +189,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
       ),
       tileColor: isSelected ? _pinkColor.withOpacity(0.1) : null,
       onTap: () {
-        setState(() => _selectedIndex = index);
+        _cambiarPantalla(index); // MODIFICADO
         Navigator.pop(context);
-        _showMessage('Pantalla de $title');
       },
     );
   }
@@ -197,9 +212,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
-            'Productos',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+          Text(
+            _selectedIndex == 4 ? 'Reportes de Ventas' : 'Productos',
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -431,9 +446,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
       // ========== MODO CELULAR: AppBar con menú hamburguesa ==========
       return Scaffold(
         appBar: AppBar(
-          title: const Text(
-            'MiTienda',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          title: Text(
+            _selectedIndex == 4 ? 'Reportes de Ventas' : 'MiTienda',
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           backgroundColor: _pinkColor,
           elevation: 0,
@@ -489,7 +504,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
           ],
         ),
         drawer: _buildDrawer(),
-        body: _buildMainContent(),
+        body: _selectedIndex == 4 ? const ReporteVentasScreen() : _buildMainContent(),
       );
     } else {
       // ========== MODO LAPTOP/TABLET: Menú lateral estático ==========
@@ -501,7 +516,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
               child: Column(
                 children: [
                   _buildDesktopNavBar(),
-                  Expanded(child: _buildMainContent()),
+                  Expanded(child: _selectedIndex == 4 ? const ReporteVentasScreen() : _buildMainContent()),
                 ],
               ),
             ),
