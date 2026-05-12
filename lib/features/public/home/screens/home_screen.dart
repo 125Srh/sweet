@@ -1,3 +1,4 @@
+// lib/features/public/home/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:sweet/features/auth/register/screens/register_admin_screen.dart';
 import '../widgets/home_header.dart';
@@ -32,34 +33,55 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.shopping_bag_outlined,
-              color: Color(0xFFFF69B4),
+          // Botón Crear Admin
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: TextButton.icon(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const RegisterAdminScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(
+                Icons.admin_panel_settings,
+                size: 16,
+                color: Color(0xFFFF69B4),
+              ),
+              label: const Text(
+                'Crear Admin',
+                style: TextStyle(color: Color(0xFFFF69B4), fontSize: 12),
+              ),
             ),
-            onPressed: () => _showComingSoon(context, 'Carrito de compras'),
           ),
-          IconButton(
-            icon: const Icon(Icons.person_outline, color: Color(0xFFFF69B4)),
-            onPressed: () => _showComingSoon(context, 'Perfil de usuario'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout, color: Color(0xFFFF69B4)),
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const RegisterAdminScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.login, color: Color(0xFFFF69B4)),
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginPage()),
-              );
-            },
+          // Botón Iniciar Sesión
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginPage()),
+                );
+              },
+              icon: const Icon(Icons.login, size: 16, color: Colors.white),
+              label: const Text(
+                'Iniciar Sesión',
+                style: TextStyle(color: Colors.white, fontSize: 12),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF69B4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
           ),
         ],
       ),

@@ -1,3 +1,4 @@
+// lib/features/auth/register/screens/register_admin_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -38,26 +39,22 @@ class _RegisterAdminScreenState extends State<RegisterAdminScreen> {
         'apellido': _apellidoController.text.trim(),
         'telefono': _telefonoController.text.trim(),
         'direccion': _direccionController.text.trim(),
-        'rol': 'admin', // 🔥 AQUÍ CAMBIA TODO
+        'rol': 'admin',
       },
     );
-    // 👇 DEBUG EN CONSOLA
-    if (error == null) {
-      print("✅ REGISTRO EXITOSO");
-    } else {
-      print("❌ ERROR REGISTER: $error");
-    }
 
-    if (error == null) {
-      _showSnackBar('✅ Admin registrado correctamente', false);
+    if (mounted) {
+      if (error == null) {
+        _showSnackBar('✅ Admin registrado correctamente', false);
 
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) {
-          context.go('/login');
-        }
-      });
-    } else {
-      _showSnackBar(error, true);
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            context.go('/admin');
+          }
+        });
+      } else {
+        _showSnackBar(error, true);
+      }
     }
   }
 
@@ -225,6 +222,11 @@ class _RegisterAdminScreenState extends State<RegisterAdminScreen> {
           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
         ),
       ),
+      validator: (v) {
+        if (v == null || v.isEmpty) return 'Campo requerido';
+        if (v.length < 6) return 'Mínimo 6 caracteres';
+        return null;
+      },
     );
   }
 
@@ -239,6 +241,12 @@ class _RegisterAdminScreenState extends State<RegisterAdminScreen> {
           onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
         ),
       ),
+      validator: (v) {
+        if (v == null || v.isEmpty) return 'Campo requerido';
+        if (v != _passwordController.text)
+          return 'Las contraseñas no coinciden';
+        return null;
+      },
     );
   }
 }
