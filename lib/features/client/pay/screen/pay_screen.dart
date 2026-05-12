@@ -111,13 +111,9 @@ class _PayScreenState extends State<PayScreen> {
           actions: [
             ElevatedButton(
               onPressed: () {
-                // Cerrar diálogo
                 Navigator.of(dialogContext).pop();
-                // Cerrar PayScreen
                 Navigator.of(context).pop();
-                // Cerrar AddressScreen
                 Navigator.of(context).pop();
-                // Cerrar CartScreen -> vuelve a ClientHomeScreen
                 Navigator.of(context).pop();
               },
               style: ElevatedButton.styleFrom(
@@ -195,6 +191,8 @@ class _PayScreenState extends State<PayScreen> {
   }
 
   Widget _resumenPedido(CartProvider cart, double total) {
+    final itemsMostrar = cart.hasSelection ? cart.selectedItems : cart.items;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -232,9 +230,9 @@ class _PayScreenState extends State<PayScreen> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            itemCount: cart.items.length,
+            itemCount: itemsMostrar.length,
             itemBuilder: (_, i) {
-              final item = cart.items[i];
+              final item = itemsMostrar[i];
               final producto = item['producto'] as Map<String, dynamic>? ?? {};
               final nombre = producto['nombre']?.toString() ?? 'Producto';
               final cantidad = (item['cantidad'] as int?) ?? 1;
