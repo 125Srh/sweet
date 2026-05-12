@@ -41,7 +41,10 @@ class _PayScreenState extends State<PayScreen> {
     final cart = context.read<CartProvider>();
     final payProvider = context.read<PayProvider>();
 
-    if (cart.items.isEmpty) {
+    // Usar solo seleccionados si hay, sino todos
+    final itemsAPagar = cart.hasSelection ? cart.selectedItems : cart.items;
+
+    if (itemsAPagar.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('El carrito está vacío'),
@@ -51,7 +54,7 @@ class _PayScreenState extends State<PayScreen> {
       return;
     }
 
-    final productos = cart.items.map((item) {
+    final productos = itemsAPagar.map((item) {
       final producto = item['producto'] as Map<String, dynamic>;
       final cantidad = item['cantidad'] as int;
       final precio = (item['precio_unitario'] as num).toDouble();
@@ -66,10 +69,14 @@ class _PayScreenState extends State<PayScreen> {
       };
     }).toList();
 
+    final subtotalPago = cart.hasSelection
+        ? cart.selectedSubtotal
+        : cart.subtotal;
+
     final exito = await payProvider.procesarPago(
-      subtotal: cart.subtotal,
+      subtotal: subtotalPago,
       envio: _costoEnvio,
-      total: cart.subtotal + _costoEnvio,
+      total: subtotalPago + _costoEnvio,
       direccion: widget.direccionCompleta,
       referencia: widget.referencia,
       celular: widget.celular,
