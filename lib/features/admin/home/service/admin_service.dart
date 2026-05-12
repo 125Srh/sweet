@@ -1,9 +1,13 @@
+// lib/features/admin/home/service/admin_service.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AdminService {
   final supabase = Supabase.instance.client;
 
-  // 🔥 PRODUCTOS
+  // ══════════════════════════════════════════════════════════
+  // 🛒 PRODUCTOS
+  // ══════════════════════════════════════════════════════════
+
   Future<List<Map<String, dynamic>>> getProductos() async {
     try {
       final res = await supabase.from('producto').select();
@@ -16,17 +20,11 @@ class AdminService {
 
   Future<void> crearProducto(Map<String, dynamic> data) async {
     try {
-      final res = await supabase.from('producto').insert(data);
-
+      await supabase.from('producto').insert(data);
       print("✅ Producto insertado correctamente");
-      print("DATA: $data");
-      print("RESPUESTA: $res");
     } catch (e) {
-      print("❌ ERROR AL CREAR PRODUCTO");
-      print("DATA ENVIADA: $data");
-      print("ERROR: $e");
-
-      rethrow; // 🔥 importante para que el provider lo capture
+      print("❌ ERROR AL CREAR PRODUCTO: $e");
+      rethrow;
     }
   }
 
@@ -39,7 +37,20 @@ class AdminService {
     }
   }
 
-  // 🔥 CATEGORÍAS
+  Future<void> actualizarProducto(String id, Map<String, dynamic> data) async {
+    try {
+      await supabase.from('producto').update(data).eq('id', id);
+      print("✏️ Producto actualizado: $id");
+    } catch (e) {
+      print("❌ Error actualizando producto: $e");
+      rethrow;
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // 🏷️ CATEGORÍAS
+  // ══════════════════════════════════════════════════════════
+
   Future<List<Map<String, dynamic>>> getCategorias() async {
     try {
       final res = await supabase.from('categoria').select();
@@ -50,7 +61,10 @@ class AdminService {
     }
   }
 
-  // 🔥 MARCAS
+  // ══════════════════════════════════════════════════════════
+  // 🏢 MARCAS
+  // ══════════════════════════════════════════════════════════
+
   Future<List<Map<String, dynamic>>> getMarcas() async {
     try {
       final res = await supabase.from('marca').select();
@@ -61,14 +75,98 @@ class AdminService {
     }
   }
 
-  Future<void> actualizarProducto(String id, Map<String, dynamic> data) async {
-    try {
-      await supabase.from('producto').update(data).eq('id', id);
+  // ══════════════════════════════════════════════════════════
+  // 🔔 NOTIFICACIONES — Consultas normales
+  // ══════════════════════════════════════════════════════════
 
-      print("✏️ Producto actualizado: $id");
+  Future<List<Map<String, dynamic>>> getNotificaciones() async {
+    try {
+      final res = await supabase
+          .from('notificaciones')
+          .select()
+          .order('creada_en', ascending: false)
+          .limit(30);
+      return List<Map<String, dynamic>>.from(res);
     } catch (e) {
-      print("❌ Error actualizando producto: $e");
-      rethrow;
+      print("❌ Error cargando notificaciones: $e");
+      return [];
     }
+  }
+
+  Future<int> getNotificacionesNoLeidas() async {
+    try {
+      final res = await supabase
+          .from('notificaciones')
+          .select()
+          .eq('leida', false);
+      return res.length;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  Future<void> crearNotificacion({
+    required String tipo,
+    required String titulo,
+    required String mensaje,
+    String? productoId,
+  }) async {
+    try {
+      await supabase.from('notificaciones').insert({
+        'tipo': tipo,
+        'titulo': titulo,
+        'mensaje': mensaje,
+        'producto_id': productoId,
+      });
+    } catch (e) {
+      print("❌ Error creando notificación: $e");
+    }
+  }
+
+  Future<void> marcarComoLeida(String id) async {
+    try {
+      await supabase
+          .from('notificaciones')
+          .update({'leida': true})
+          .eq('id', id);
+    } catch (e) {
+      print("❌ Error marcando notificación como leída: $e");
+    }
+  }
+
+  Future<void> marcarTodasComoLeidas() async {
+    try {
+      await supabase
+          .from('notificaciones')
+          .update({'leida': true})
+          .eq('leida', false);
+    } catch (e) {
+      print("❌ Error marcando todas como leídas: $e");
+    }
+  }
+
+  Future<void> eliminarNotificacion(String id) async {
+    try {
+      await supabase.from('notificaciones').delete().eq('id', id);
+      print("🗑️ Notificación eliminada: $id");
+    } catch (e) {
+      print("❌ Error eliminando notificación: $e");
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // 🔥 STREAM EN TIEMPO REAL — WebSocket con Supabase Realtime
+  //
+  // IMPORTANTE: Para que funcione, ve a tu dashboard de Supabase →
+  // Table Editor → tabla "notificaciones" → activa "Enable Realtime"
+  // ══════════════════════════════════════════════════════════
+
+  Stream<List<Map<String, dynamic>>> streamNotificaciones() {
+    return supabase
+        .from('notificaciones')
+        .stream(primaryKey: ['id'])
+        .order('creada_en', ascending: false)
+        .limit(30)
+        .map((data) => List<Map<String, dynamic>>.from(data));
   }
 }
