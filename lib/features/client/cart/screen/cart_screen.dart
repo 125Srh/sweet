@@ -1,3 +1,4 @@
+// lib/features/client/cart/screen/cart_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../provider/cart_provider.dart';
@@ -128,8 +129,20 @@ class _CartScreenState extends State<CartScreen> {
         elevation: 0,
         title: Row(
           children: [
+            // Checkbox seleccionar todos ANTES del ícono
+            if (cart.items.isNotEmpty)
+              Checkbox(
+                value: cart.allSelected,
+                onChanged: (_) => cart.toggleAll(),
+                activeColor: const Color(0xFFFF69B4),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              ),
             const Icon(Icons.shopping_bag_outlined, color: Color(0xFFFF69B4)),
-            const SizedBox(width: 10),
+            const SizedBox(width: 4),
             const Text(
               'Mi Carrito',
               style: TextStyle(
@@ -358,6 +371,7 @@ class _CartScreenState extends State<CartScreen> {
       final cantidad = (item['cantidad'] as int?) ?? 1;
       final precio = (item['precio_unitario'] as num?)?.toDouble() ?? 0.0;
       final subtotal = cantidad * precio;
+      final isSelected = cart.selectedIds.contains(itemId);
 
       return Dismissible(
         key: Key(itemId),
@@ -391,11 +405,23 @@ class _CartScreenState extends State<CartScreen> {
             padding: const EdgeInsets.all(14),
             child: Row(
               children: [
+                // Checkbox de selección
+                Checkbox(
+                  value: isSelected,
+                  onChanged: (_) => cart.toggleItem(itemId),
+                  activeColor: const Color(0xFFFF69B4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                ),
+                const SizedBox(width: 4),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
                   child: Container(
-                    width: 80,
-                    height: 80,
+                    width: 70,
+                    height: 70,
                     decoration: BoxDecoration(
                       color: const Color(0xFFFF69B4).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(14),
@@ -407,17 +433,17 @@ class _CartScreenState extends State<CartScreen> {
                             errorBuilder: (_, __, ___) => const Icon(
                               Icons.spa,
                               color: Color(0xFFFF69B4),
-                              size: 36,
+                              size: 30,
                             ),
                           )
                         : const Icon(
                             Icons.spa,
                             color: Color(0xFFFF69B4),
-                            size: 36,
+                            size: 30,
                           ),
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -539,10 +565,11 @@ class _CartScreenState extends State<CartScreen> {
                     ],
                   ),
                 ),
+                // Botón eliminar con ícono de basurero
                 IconButton(
                   onPressed: () => _confirmDelete(itemId, nombre),
                   icon: const Icon(
-                    Icons.close_rounded,
+                    Icons.delete_outline,
                     color: Colors.red,
                     size: 20,
                   ),
@@ -605,20 +632,24 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ),
         const SizedBox(height: 16),
+
+        // Subtotal
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Subtotal:',
-              style: TextStyle(fontSize: 15, color: Colors.black54),
+            Text(
+              cart.hasSelection ? 'Subtotal (seleccionado):' : 'Subtotal:',
+              style: const TextStyle(fontSize: 15, color: Colors.black54),
             ),
             Text(
-              'Bs. ${cart.subtotal.toStringAsFixed(2)}',
+              'Bs. ${cart.hasSelection ? cart.selectedSubtotal.toStringAsFixed(2) : "0.00"}',
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
           ],
         ),
         const SizedBox(height: 6),
+
+        // Envío
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -626,9 +657,12 @@ class _CartScreenState extends State<CartScreen> {
               'Envío:',
               style: TextStyle(fontSize: 15, color: Colors.black54),
             ),
-            const Text(
-              'A calcular',
-              style: TextStyle(fontSize: 14, color: Colors.orange),
+            Text(
+              cart.hasSelection ? 'A calcular' : '—',
+              style: TextStyle(
+                fontSize: 14,
+                color: cart.hasSelection ? Colors.orange : Colors.grey,
+              ),
             ),
           ],
         ),
@@ -636,6 +670,8 @@ class _CartScreenState extends State<CartScreen> {
           padding: EdgeInsets.symmetric(vertical: 12),
           child: Divider(color: Color(0xFFFFE4E9)),
         ),
+
+        // Total
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -648,7 +684,7 @@ class _CartScreenState extends State<CartScreen> {
               ),
             ),
             Text(
-              'Bs. ${cart.subtotal.toStringAsFixed(2)}',
+              'Bs. ${cart.hasSelection ? cart.selectedSubtotal.toStringAsFixed(2) : "0.00"}',
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -658,25 +694,28 @@ class _CartScreenState extends State<CartScreen> {
           ],
         ),
         const SizedBox(height: 16),
+
+        // Botón SOLO activo si hay selección
         SizedBox(
           width: double.infinity,
           height: 54,
           child: ElevatedButton.icon(
-            onPressed: cart.items.isEmpty 
-                ? null 
-                : () {
-                    // ← MODIFICADO: Redirecciona a AddressScreen
+            onPressed: cart.hasSelection
+                ? () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const AddressScreen(),
                       ),
                     );
-                  },
+                  }
+                : null,
             icon: const Icon(Icons.payment_rounded, color: Colors.white),
-            label: const Text(
-              'Proceder al pago',
-              style: TextStyle(
+            label: Text(
+              cart.hasSelection
+                  ? 'Proceder al pago (${cart.selectedCount})'
+                  : 'Selecciona productos',
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
