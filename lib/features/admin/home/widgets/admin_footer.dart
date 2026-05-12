@@ -1,3 +1,4 @@
+// lib/features/admin/home/widgets/admin_footer.dart
 import 'package:flutter/material.dart';
 import '../providers/admin_provider.dart';
 
@@ -16,7 +17,7 @@ class AdminFooter extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Total: ${provider.categorias.length} productos',
+            'Total: ${provider.productos.length} productos',
             style: TextStyle(color: Colors.grey[700], fontSize: 12),
           ),
           Text(

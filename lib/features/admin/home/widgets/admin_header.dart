@@ -1,3 +1,4 @@
+// lib/features/admin/home/widgets/admin_header.dart
 import 'package:flutter/material.dart';
 import 'package:sweet/features/admin/home/widgets/admin_form.dart';
 
@@ -14,12 +15,12 @@ class AdminHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Gestión de Producto',
+            'Gestión de Productos',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
-            'Los productos son los articulos que se venden en la empresa',
+            'Los productos son los artículos que se venden en la empresa',
             style: TextStyle(color: Colors.grey[600], fontSize: 12),
           ),
           const SizedBox(height: 12),
@@ -34,7 +35,7 @@ class AdminHeader extends StatelessWidget {
                 );
               },
               icon: const Icon(Icons.add),
-              label: const Text('Registrar Producto'),
+              label: const Text('+ Nuevo Producto'),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
             ),
           ),
