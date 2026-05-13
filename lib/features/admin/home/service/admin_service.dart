@@ -76,7 +76,7 @@ class AdminService {
   }
 
   // ══════════════════════════════════════════════════════════
-  // 🔔 NOTIFICACIONES — Consultas normales
+  // 🔔 NOTIFICACIONES
   // ══════════════════════════════════════════════════════════
 
   Future<List<Map<String, dynamic>>> getNotificaciones() async {
@@ -155,10 +155,29 @@ class AdminService {
   }
 
   // ══════════════════════════════════════════════════════════
-  // 🔥 STREAM EN TIEMPO REAL — WebSocket con Supabase Realtime
-  //
-  // IMPORTANTE: Para que funcione, ve a tu dashboard de Supabase →
-  // Table Editor → tabla "notificaciones" → activa "Enable Realtime"
+  // 📋 HISTORIAL DE STOCK
+  // ══════════════════════════════════════════════════════════
+
+  Future<void> registrarHistorial({
+    required String productoId,
+    required int cantidadAnterior,
+    required int cantidadNueva,
+    required String usuarioId,
+  }) async {
+    try {
+      await supabase.from('historial_stock').insert({
+        'producto_id': productoId,
+        'cantidad_anterior': cantidadAnterior,
+        'cantidad_nueva': cantidadNueva,
+        'usuario_id': usuarioId,
+      });
+    } catch (e) {
+      print("❌ Error registrando historial: $e");
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // 🔥 STREAMS TIEMPO REAL
   // ══════════════════════════════════════════════════════════
 
   Stream<List<Map<String, dynamic>>> streamNotificaciones() {
@@ -167,6 +186,13 @@ class AdminService {
         .stream(primaryKey: ['id'])
         .order('creada_en', ascending: false)
         .limit(30)
+        .map((data) => List<Map<String, dynamic>>.from(data));
+  }
+
+  Stream<List<Map<String, dynamic>>> streamProductos() {
+    return supabase
+        .from('producto')
+        .stream(primaryKey: ['id'])
         .map((data) => List<Map<String, dynamic>>.from(data));
   }
 }
