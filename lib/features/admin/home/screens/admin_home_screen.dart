@@ -1,3 +1,4 @@
+// lib/features/admin/home/screens/admin_home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/admin_provider.dart';
@@ -35,7 +36,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           const AdminHeader(),
           AdminSearch(),
 
-          Expanded(child: AdminList(provider: provider)),
+          const Expanded(child: AdminList()),
 
           AdminFooter(provider: provider),
         ],

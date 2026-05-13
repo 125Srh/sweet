@@ -1,3 +1,4 @@
+// lib/features/admin/home/widgets/admin_drawer.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -72,9 +73,15 @@ class AdminDrawer extends StatelessWidget {
             },
           ),
           item(
+<<<<<<< HEAD
             Icons.admin_panel_settings,
             'Admins',
             selected: selectedIndex == 1,
+=======
+            Icons.inventory_2,
+            'Productos',
+            selected: true,
+>>>>>>> 0200c0df6340351dc03eadb8591a20d3293c17e1
             onTap: () {
               Navigator.pop(context);
               context.go('/admin');
@@ -138,7 +145,7 @@ class AdminDrawer extends StatelessWidget {
 
                 if (!context.mounted) return;
 
-                context.go('/login'); // redirección
+                context.go('/login');
               }
             },
           ),

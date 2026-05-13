@@ -4,6 +4,7 @@ class ClientCategoryItem extends StatelessWidget {
   final String name;
   final IconData icon;
   final Color color;
+  final String? imageUrl;
   final VoidCallback onTap;
 
   const ClientCategoryItem({
@@ -11,6 +12,7 @@ class ClientCategoryItem extends StatelessWidget {
     required this.name,
     required this.icon,
     required this.color,
+    this.imageUrl,
     required this.onTap,
   });
 
@@ -23,17 +25,29 @@ class ClientCategoryItem extends StatelessWidget {
           GestureDetector(
             onTap: onTap,
             child: Container(
-              width: 60,
-              height: 60,
+              width: 65,
+              height: 65,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.3),
-                shape: BoxShape.circle,
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: color.withOpacity(0.3)),
+                image: imageUrl != null && imageUrl!.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(imageUrl!),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
               ),
-              child: Icon(icon, color: const Color(0xFFD81B60), size: 30),
+              child: imageUrl == null || imageUrl!.isEmpty
+                  ? Icon(icon, color: const Color(0xFFD81B60), size: 28)
+                  : null,
             ),
           ),
           const SizedBox(height: 8),
-          Text(name, style: const TextStyle(fontSize: 12)),
+          Text(
+            name,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          ),
         ],
       ),
     );
