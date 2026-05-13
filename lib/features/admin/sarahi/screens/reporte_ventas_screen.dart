@@ -5,6 +5,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../services/reporte_service.dart';
 import '../models/reporte_venta.dart';
+import '../../home/widgets/admin_appbar.dart';
+import '../../home/widgets/admin_drawer.dart';
 
 class ReporteVentasScreen extends StatefulWidget {
   const ReporteVentasScreen({super.key});
@@ -77,12 +79,11 @@ class _ReporteVentasScreenState extends State<ReporteVentasScreen> {
             ),
           ),
           pw.Table.fromTextArray(
-            headers: ['MES', 'VENTAS', 'MONTO (Bs)', 'GANANCIA (Bs)'],
+            headers: ['MES', 'VENTAS', 'MONTO (Bs)'],
             data: _reportes.map((r) => [
               r.nombreMes,
               '${r.cantidadVentas}',
               r.montoTotal.toStringAsFixed(2),
-              r.gananciaTotal.toStringAsFixed(2),
             ]).toList(),
             border: pw.TableBorder.all(),
             headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
@@ -103,7 +104,6 @@ class _ReporteVentasScreenState extends State<ReporteVentasScreen> {
                 pw.SizedBox(height: 8),
                 pw.Text('Total Ventas: ${reporteAnual.totalVentas}'),
                 pw.Text('Monto Total: Bs. ${reporteAnual.montoTotal.toStringAsFixed(2)}'),
-                pw.Text('Ganancia Total: Bs. ${reporteAnual.gananciaTotal.toStringAsFixed(2)}'),
               ],
             ),
           ),
@@ -120,23 +120,9 @@ class _ReporteVentasScreenState extends State<ReporteVentasScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: const AdminAppBar(),
+      drawer: const AdminDrawer(selectedIndex: 4),
       backgroundColor: const Color(0xFFFFF0F5),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          'Reporte de Ventas',
-          style: TextStyle(color: Color(0xFFD81B60), fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          if (!_isLoading && _reportes.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.print, color: Color(0xFFD81B60)),
-              onPressed: _imprimirReporte,
-              tooltip: 'Imprimir reporte',
-            ),
-        ],
-      ),
       body: Column(
         children: [
           _buildSelectorAnio(),
@@ -213,30 +199,41 @@ class _ReporteVentasScreenState extends State<ReporteVentasScreen> {
             'Seleccionar año:',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFFFF69B4)),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: DropdownButton<int>(
-              value: _selectedYear,
-              underline: const SizedBox(),
-              items: _availableYears.map((year) {
-                return DropdownMenuItem(
-                  value: year,
-                  child: Text(year.toString()),
-                );
-              }).toList(),
-              onChanged: (year) {
-                if (year != null) {
-                  setState(() {
-                    _selectedYear = year;
-                  });
-                  _cargarReportes();
-                }
-              },
-            ),
+          Row(
+            children: [
+              if (!_isLoading && _reportes.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.print, color: Color(0xFFD81B60)),
+                  onPressed: _imprimirReporte,
+                  tooltip: 'Imprimir reporte',
+                ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFFFF69B4)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButton<int>(
+                  value: _selectedYear,
+                  underline: const SizedBox(),
+                  items: _availableYears.map((year) {
+                    return DropdownMenuItem(
+                      value: year,
+                      child: Text(year.toString()),
+                    );
+                  }).toList(),
+                  onChanged: (year) {
+                    if (year != null) {
+                      setState(() {
+                        _selectedYear = year;
+                      });
+                      _cargarReportes();
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -339,14 +336,12 @@ class _ReporteVentasScreenState extends State<ReporteVentasScreen> {
             DataColumn(label: Text('MES', style: TextStyle(fontWeight: FontWeight.bold))),
             DataColumn(label: Text('CANTIDAD', style: TextStyle(fontWeight: FontWeight.bold))),
             DataColumn(label: Text('MONTO TOTAL', style: TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text('GANANCIA', style: TextStyle(fontWeight: FontWeight.bold))),
           ],
           rows: _reportes.map((reporte) {
             return DataRow(cells: [
               DataCell(Text(reporte.nombreMes)),
               DataCell(Text('${reporte.cantidadVentas}')),
               DataCell(Text('Bs. ${reporte.montoTotal.toStringAsFixed(2)}')),
-              DataCell(Text('Bs. ${reporte.gananciaTotal.toStringAsFixed(2)}')),
             ]);
           }).toList(),
         ),
@@ -357,7 +352,6 @@ class _ReporteVentasScreenState extends State<ReporteVentasScreen> {
   Widget _buildResumenAnual() {
     final totalVentas = _reportes.fold(0, (sum, r) => sum + r.cantidadVentas);
     final montoTotal = _reportes.fold(0.0, (sum, r) => sum + r.montoTotal);
-    final gananciaTotal = _reportes.fold(0.0, (sum, r) => sum + r.gananciaTotal);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -382,7 +376,6 @@ class _ReporteVentasScreenState extends State<ReporteVentasScreen> {
           const SizedBox(height: 12),
           _buildResumenItem('Total Ventas:', '$totalVentas'),
           _buildResumenItem('Monto Total:', 'Bs. ${montoTotal.toStringAsFixed(2)}'),
-          _buildResumenItem('Ganancia Total:', 'Bs. ${gananciaTotal.toStringAsFixed(2)}'),
         ],
       ),
     );

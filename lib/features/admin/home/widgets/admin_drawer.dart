@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AdminDrawer extends StatelessWidget {
-  const AdminDrawer({super.key});
+  final int selectedIndex;
+  
+  const AdminDrawer({super.key, this.selectedIndex = 1});
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +65,7 @@ class AdminDrawer extends StatelessWidget {
           item(
             Icons.dashboard_outlined,
             'Inicio',
+            selected: selectedIndex == 0,
             onTap: () {
               Navigator.pop(context);
               context.go('/admin');
@@ -71,25 +74,31 @@ class AdminDrawer extends StatelessWidget {
           item(
             Icons.admin_panel_settings,
             'Admins',
-            selected: true,
-            onTap: () => Navigator.pop(context),
+            selected: selectedIndex == 1,
+            onTap: () {
+              Navigator.pop(context);
+              context.go('/admin');
+            },
           ),
           item(
             Icons.people_outline,
             'Clientes',
+            selected: selectedIndex == 2,
             onTap: () => Navigator.pop(context),
           ),
           item(
             Icons.shopping_cart_outlined,
             'Ventas',
+            selected: selectedIndex == 3,
             onTap: () => Navigator.pop(context),
           ),
           item(
             Icons.bar_chart_outlined,
             'Reportes',
+            selected: selectedIndex == 4,
             onTap: () {
               Navigator.pop(context);
-              context.go('/admin2?tab=reportes');
+              context.go('/reportes');
             },
           ),
 
