@@ -73,15 +73,9 @@ class AdminDrawer extends StatelessWidget {
             },
           ),
           item(
-<<<<<<< HEAD
-            Icons.admin_panel_settings,
-            'Admins',
-            selected: selectedIndex == 1,
-=======
             Icons.inventory_2,
             'Productos',
-            selected: true,
->>>>>>> 0200c0df6340351dc03eadb8591a20d3293c17e1
+            selected: selectedIndex == 1,
             onTap: () {
               Navigator.pop(context);
               context.go('/admin');
