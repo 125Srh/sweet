@@ -2,10 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../screens/admin_clients_screen.dart';           // ← HU-19
+import '../screens/admin_notifications_screen.dart';     // ← HU-22
 
 class AdminDrawer extends StatelessWidget {
   final int selectedIndex;
-  
+
   const AdminDrawer({super.key, this.selectedIndex = 1});
 
   @override
@@ -39,6 +41,7 @@ class AdminDrawer extends StatelessWidget {
     return Drawer(
       child: Column(
         children: [
+          // ── Header — igual que el original ──────────────
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 40),
@@ -81,22 +84,49 @@ class AdminDrawer extends StatelessWidget {
               context.go('/admin');
             },
           ),
+
+          // ← HU-19: navega a la pantalla de clientes
           item(
             Icons.people_outline,
             'Clientes',
             selected: selectedIndex == 2,
-            onTap: () => Navigator.pop(context),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AdminClientsScreen(),
+                ),
+              );
+            },
           ),
+
+          // ← HU-22: navega a notificaciones de ventas
+          item(
+            Icons.notifications_outlined,
+            'Notificaciones de ventas',
+            selected: selectedIndex == 3,
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AdminNotificationsScreen(),
+                ),
+              );
+            },
+          ),
+
           item(
             Icons.shopping_cart_outlined,
             'Ventas',
-            selected: selectedIndex == 3,
+            selected: selectedIndex == 4,
             onTap: () => Navigator.pop(context),
           ),
           item(
             Icons.bar_chart_outlined,
             'Reportes',
-            selected: selectedIndex == 4,
+            selected: selectedIndex == 5,
             onTap: () {
               Navigator.pop(context);
               context.go('/reportes');
@@ -136,9 +166,7 @@ class AdminDrawer extends StatelessWidget {
 
               if (confirmar == true) {
                 await Supabase.instance.client.auth.signOut();
-
                 if (!context.mounted) return;
-
                 context.go('/login');
               }
             },
