@@ -1,9 +1,11 @@
 // lib/features/admin/home/providers/admin_provider.dart
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../service/admin_service.dart';
 
 class AdminsProvider extends ChangeNotifier {
   final AdminService _service = AdminService();
+  final _db = Supabase.instance.client;
 
   bool isLoading = false;
 
@@ -12,6 +14,75 @@ class AdminsProvider extends ChangeNotifier {
   List<Map<String, dynamic>> productos = [];
 
   String _searchQuery = '';
+
+  // ✅ FIX: canal de Realtime para escuchar cambios en la tabla producto
+  RealtimeChannel? _productosChannel;
+
+  // ══════════════════════════════════════════════════════════
+  // 🔴 REALTIME — suscribirse a cambios de stock en tiempo real
+  // ══════════════════════════════════════════════════════════
+
+  /// Llamar una sola vez al iniciar el panel admin (en initState).
+  void suscribirseAProductos() {
+    // Evitar suscripciones duplicadas
+    if (_productosChannel != null) return;
+
+    _productosChannel = _db
+        .channel('admin-productos-realtime')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'producto',
+          callback: (payload) {
+            // ✅ Cuando un cliente compra y se descuenta el stock,
+            //    Supabase dispara este evento y actualizamos el producto
+            //    en memoria sin necesidad de recargar toda la lista
+            final productoActualizado = payload.newRecord;
+            final id = productoActualizado['id']?.toString();
+            if (id == null) return;
+
+            final index = productos.indexWhere((p) => p['id'].toString() == id);
+            if (index != -1) {
+              productos[index] = Map<String, dynamic>.from(productoActualizado);
+              notifyListeners();
+              print(
+                '🔄 Stock actualizado en tiempo real: ${productoActualizado['nombre']} → stock: ${productoActualizado['stock']}',
+              );
+            }
+          },
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'producto',
+          callback: (payload) {
+            // Si se crea un producto nuevo, recargar la lista completa
+            cargarProductos();
+          },
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.delete,
+          schema: 'public',
+          table: 'producto',
+          callback: (payload) {
+            // Si se elimina un producto, quitarlo de la lista local
+            final id = payload.oldRecord['id']?.toString();
+            if (id != null) {
+              productos.removeWhere((p) => p['id'].toString() == id);
+              notifyListeners();
+            }
+          },
+        )
+        .subscribe();
+  }
+
+  /// Llamar en dispose() del widget que usa este provider.
+  Future<void> cancelarSuscripcion() async {
+    if (_productosChannel != null) {
+      await _db.removeChannel(_productosChannel!);
+      _productosChannel = null;
+    }
+  }
 
   // ══════════════════════════════════════════════════════════
   // 🔍 BÚSQUEDA
@@ -116,13 +187,10 @@ class AdminsProvider extends ChangeNotifier {
         'marca_id': marcaId,
       });
 
-      // Recargar para obtener el ID real del producto recién creado
       await cargarProductos();
 
-      // Usar el último producto cargado para la notificación
       final productoId = productos.isNotEmpty
-          ? productos.first['id']
-                .toString() // ordenado por fecha desc
+          ? productos.first['id'].toString()
           : '';
 
       if (productoId.isNotEmpty) {
@@ -162,9 +230,7 @@ class AdminsProvider extends ChangeNotifier {
         'marca_id': marcaId,
       });
 
-      // Notificar si el stock es bajo o está agotado
       await _notificarStock(nombre, stock, id);
-
       await cargarProductos();
       return null;
     } catch (e) {

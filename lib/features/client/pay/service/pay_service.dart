@@ -50,13 +50,13 @@ class PayService {
 
       await _db.from('pedido_detalle').insert(pedidoDetalles);
 
-      // ── 3. Descontar stock y notificar si es necesario ──────────────
+      // ── 3. Descontar stock via RPC (saltea RLS) ─────────────────────
       for (final producto in productos) {
-        final productoId = producto['producto_id'].toString();
+        final productoId = producto['producto_id'] as String;
         final cantidadVendida = producto['cantidad'] as int;
         final nombreProducto = producto['nombre'].toString();
 
-        // Obtener stock actual
+        // Obtener stock actual (para calcular notificaciones)
         final productoActual = await _db
             .from('producto')
             .select('stock')
@@ -66,13 +66,19 @@ class PayService {
         final stockActual = (productoActual['stock'] as int?) ?? 0;
         final stockNuevo = (stockActual - cantidadVendida).clamp(0, 99999);
 
-        // Descontar stock en la BD
-        await _db
-            .from('producto')
-            .update({'stock': stockNuevo})
-            .eq('id', productoId);
+        // ✅ FIX PRINCIPAL: descontar stock via RPC con SECURITY DEFINER
+        //    Esto saltea el RLS y permite el update aunque el usuario
+        //    sea un cliente sin permisos de escritura en la tabla producto
+        await _db.rpc(
+          'descontar_stock',
+          params: {'p_producto_id': productoId, 'p_cantidad': cantidadVendida},
+        );
 
-        // Crear notificación si el stock quedó bajo o agotado
+        print(
+          '✅ Stock descontado: $nombreProducto | $stockActual → $stockNuevo',
+        );
+
+        // Notificar si el stock quedó bajo o agotado
         await _notificarStockSiNecesario(
           productoId: productoId,
           nombre: nombreProducto,
@@ -95,7 +101,6 @@ class PayService {
     required int stockNuevo,
   }) async {
     try {
-      // Solo notificar si el stock cruzó un umbral (evita duplicados)
       // Caso 1: se agotó ahora (antes tenía stock, ahora = 0)
       if (stockNuevo <= 0 && stockAnterior > 0) {
         await _db.from('notificaciones').insert({
@@ -120,7 +125,7 @@ class PayService {
         return;
       }
 
-      // Caso 3: ya estaba en stock bajo y sigue bajando (actualiza mensaje)
+      // Caso 3: ya estaba en stock bajo y sigue bajando
       if (stockNuevo <= 3 && stockNuevo > 0 && stockAnterior <= 3) {
         await _db.from('notificaciones').insert({
           'tipo': 'stock_bajo',
