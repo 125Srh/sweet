@@ -20,8 +20,7 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
         style: TextStyle(fontWeight: FontWeight.bold),
       ),
       actions: [
-        IconButton(icon: const Icon(Icons.print), onPressed: () {}),
-        IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
+        // ✅ Se eliminaron los íconos de impresión y configuración
         const _NotificacionesBtn(),
         const Padding(
           padding: EdgeInsets.only(right: 10),
@@ -104,15 +103,9 @@ class _NotificacionesBtnState extends State<_NotificacionesBtn> {
         notificaciones: _notificaciones,
         noLeidas: _noLeidas,
         onClose: _cerrarPanel,
-        onMarcarLeida: (id) async {
-          await _service.marcarComoLeida(id);
-        },
-        onEliminar: (id) async {
-          await _service.eliminarNotificacion(id);
-        },
-        onMarcarTodas: () async {
-          await _service.marcarTodasComoLeidas();
-        },
+        onMarcarLeida: (id) async => await _service.marcarComoLeida(id),
+        onEliminar: (id) async => await _service.eliminarNotificacion(id),
+        onMarcarTodas: () async => await _service.marcarTodasComoLeidas(),
       ),
     );
   }
@@ -245,7 +238,6 @@ class _PanelContent extends StatelessWidget {
         return Icons.inventory_2_outlined;
       case 'agotado':
         return Icons.remove_shopping_cart;
-      // ✅ NUEVO: ícono para reposición
       case 'reposicion':
         return Icons.add_shopping_cart;
       default:
@@ -259,7 +251,6 @@ class _PanelContent extends StatelessWidget {
         return const Color(0xFFE67E22);
       case 'agotado':
         return const Color(0xFFE74C3C);
-      // ✅ NUEVO: color verde para reposición
       case 'reposicion':
         return const Color(0xFF27AE60);
       default:
@@ -338,7 +329,6 @@ class _PanelContent extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Encabezado ──────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 12, 10),
             child: Row(
@@ -392,7 +382,6 @@ class _PanelContent extends StatelessWidget {
 
           const Divider(height: 1, thickness: 1, color: Color(0xFFF0F0F0)),
 
-          // ── Lista o estado vacío ─────────────────────────
           if (notificaciones.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 36),
