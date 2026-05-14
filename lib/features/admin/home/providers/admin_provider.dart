@@ -15,16 +15,13 @@ class AdminsProvider extends ChangeNotifier {
 
   String _searchQuery = '';
 
-  // ✅ FIX: canal de Realtime para escuchar cambios en la tabla producto
   RealtimeChannel? _productosChannel;
 
   // ══════════════════════════════════════════════════════════
-  // 🔴 REALTIME — suscribirse a cambios de stock en tiempo real
+  // 🔴 REALTIME
   // ══════════════════════════════════════════════════════════
 
-  /// Llamar una sola vez al iniciar el panel admin (en initState).
   void suscribirseAProductos() {
-    // Evitar suscripciones duplicadas
     if (_productosChannel != null) return;
 
     _productosChannel = _db
@@ -34,9 +31,6 @@ class AdminsProvider extends ChangeNotifier {
           schema: 'public',
           table: 'producto',
           callback: (payload) {
-            // ✅ Cuando un cliente compra y se descuenta el stock,
-            //    Supabase dispara este evento y actualizamos el producto
-            //    en memoria sin necesidad de recargar toda la lista
             final productoActualizado = payload.newRecord;
             final id = productoActualizado['id']?.toString();
             if (id == null) return;
@@ -56,7 +50,6 @@ class AdminsProvider extends ChangeNotifier {
           schema: 'public',
           table: 'producto',
           callback: (payload) {
-            // Si se crea un producto nuevo, recargar la lista completa
             cargarProductos();
           },
         )
@@ -65,7 +58,6 @@ class AdminsProvider extends ChangeNotifier {
           schema: 'public',
           table: 'producto',
           callback: (payload) {
-            // Si se elimina un producto, quitarlo de la lista local
             final id = payload.oldRecord['id']?.toString();
             if (id != null) {
               productos.removeWhere((p) => p['id'].toString() == id);
@@ -76,7 +68,6 @@ class AdminsProvider extends ChangeNotifier {
         .subscribe();
   }
 
-  /// Llamar en dispose() del widget que usa este provider.
   Future<void> cancelarSuscripcion() async {
     if (_productosChannel != null) {
       await _db.removeChannel(_productosChannel!);
@@ -102,7 +93,7 @@ class AdminsProvider extends ChangeNotifier {
   }
 
   // ══════════════════════════════════════════════════════════
-  // 📊 ALERTAS DE STOCK (computed localmente)
+  // 📊 ALERTAS DE STOCK
   // ══════════════════════════════════════════════════════════
 
   List<Map<String, dynamic>> get productosStockBajo {
@@ -122,26 +113,41 @@ class AdminsProvider extends ChangeNotifier {
   int get totalAlertas => productosStockBajo.length + productosAgotados.length;
 
   // ══════════════════════════════════════════════════════════
-  // 🔔 CREAR NOTIFICACIÓN DE STOCK
+  // 🔔 NOTIFICACIONES DE STOCK
   // ══════════════════════════════════════════════════════════
 
   Future<void> _notificarStock(
     String nombre,
-    int stock,
+    int stockAnterior,
+    int stockNuevo,
     String productoId,
   ) async {
-    if (stock <= 0) {
+    // ✅ NUEVO: reposición de stock (el admin subió el stock)
+    if (stockNuevo > stockAnterior) {
+      final repuesto = stockNuevo - stockAnterior;
+      await _service.crearNotificacion(
+        tipo: 'reposicion',
+        titulo: '📦 Stock repuesto',
+        mensaje:
+            'Se agregaron $repuesto unidades a $nombre. Stock actual: $stockNuevo',
+        productoId: productoId,
+      );
+      return;
+    }
+
+    // Stock bajo o agotado (el admin bajó el stock manualmente)
+    if (stockNuevo <= 0) {
       await _service.crearNotificacion(
         tipo: 'agotado',
         titulo: '🚨 Producto agotado',
         mensaje: '$nombre se ha agotado. ¡Repón cuanto antes!',
         productoId: productoId,
       );
-    } else if (stock <= 3) {
+    } else if (stockNuevo <= 3) {
       await _service.crearNotificacion(
         tipo: 'stock_bajo',
         titulo: '⚠️ Stock bajo',
-        mensaje: 'Solo quedan $stock unidades de $nombre',
+        mensaje: 'Solo quedan $stockNuevo unidades de $nombre',
         productoId: productoId,
       );
     }
@@ -194,7 +200,8 @@ class AdminsProvider extends ChangeNotifier {
           : '';
 
       if (productoId.isNotEmpty) {
-        await _notificarStock(nombre, stock, productoId);
+        // Al crear, no hay stock anterior — notificar solo si ya nace con stock bajo
+        await _notificarStock(nombre, 0, stock, productoId);
       }
 
       return null;
@@ -220,6 +227,13 @@ class AdminsProvider extends ChangeNotifier {
       isLoading = true;
       notifyListeners();
 
+      // ✅ Obtener stock anterior antes de actualizar
+      final productoActual = productos.firstWhere(
+        (p) => p['id'].toString() == id,
+        orElse: () => {},
+      );
+      final stockAnterior = (productoActual['stock'] as int?) ?? 0;
+
       await _service.actualizarProducto(id, {
         'nombre': nombre,
         'descripcion': descripcion,
@@ -230,7 +244,9 @@ class AdminsProvider extends ChangeNotifier {
         'marca_id': marcaId,
       });
 
-      await _notificarStock(nombre, stock, id);
+      // ✅ Notificar según el cambio de stock (reposición, bajo o agotado)
+      await _notificarStock(nombre, stockAnterior, stock, id);
+
       await cargarProductos();
       return null;
     } catch (e) {

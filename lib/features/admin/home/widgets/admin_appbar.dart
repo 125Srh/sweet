@@ -22,10 +22,7 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         IconButton(icon: const Icon(Icons.print), onPressed: () {}),
         IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
-
-        // 🔔 Botón campana con panel en tiempo real
         const _NotificacionesBtn(),
-
         const Padding(
           padding: EdgeInsets.only(right: 10),
           child: CircleAvatar(
@@ -42,7 +39,7 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 // ══════════════════════════════════════════════════════════════
-// Botón campana — maneja el Overlay y escucha el stream
+// Botón campana
 // ══════════════════════════════════════════════════════════════
 class _NotificacionesBtn extends StatefulWidget {
   const _NotificacionesBtn();
@@ -58,29 +55,22 @@ class _NotificacionesBtnState extends State<_NotificacionesBtn> {
   OverlayEntry? _overlayEntry;
   bool _panelAbierto = false;
 
-  // Estado reactivo — se actualiza con cada evento del stream
   List<Map<String, dynamic>> _notificaciones = [];
   int _noLeidas = 0;
 
   @override
   void initState() {
     super.initState();
-
-    // 🔥 WebSocket con Supabase Realtime:
-    // Cada INSERT / UPDATE / DELETE en la tabla "notificaciones"
-    // llega aquí instantáneamente sin polling.
     _service.streamNotificaciones().listen((lista) {
       if (!mounted) return;
       setState(() {
         _notificaciones = lista;
         _noLeidas = lista.where((n) => n['leida'] == false).length;
       });
-      // Si el panel está abierto, actualiza su contenido al vuelo
       if (_panelAbierto) _refreshOverlay();
     });
   }
 
-  // Cierra y vuelve a abrir el overlay con los datos frescos
   void _refreshOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = null;
@@ -116,15 +106,12 @@ class _NotificacionesBtnState extends State<_NotificacionesBtn> {
         onClose: _cerrarPanel,
         onMarcarLeida: (id) async {
           await _service.marcarComoLeida(id);
-          // El stream detecta el UPDATE y actualiza automáticamente
         },
         onEliminar: (id) async {
           await _service.eliminarNotificacion(id);
-          // El stream detecta el DELETE y actualiza automáticamente
         },
         onMarcarTodas: () async {
           await _service.marcarTodasComoLeidas();
-          // El stream detecta los UPDATEs y actualiza automáticamente
         },
       ),
     );
@@ -183,7 +170,7 @@ class _NotificacionesBtnState extends State<_NotificacionesBtn> {
 }
 
 // ══════════════════════════════════════════════════════════════
-// Panel flotante anclado a la campana (estilo Facebook)
+// Panel flotante
 // ══════════════════════════════════════════════════════════════
 class _NotificacionesPanel extends StatelessWidget {
   final LayerLink layerLink;
@@ -208,15 +195,12 @@ class _NotificacionesPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Fondo invisible — toca fuera para cerrar
         Positioned.fill(
           child: GestureDetector(
             onTap: onClose,
             behavior: HitTestBehavior.translucent,
           ),
         ),
-
-        // Panel anclado a la campana
         CompositedTransformFollower(
           link: layerLink,
           offset: const Offset(-270, 56),
@@ -255,14 +239,15 @@ class _PanelContent extends StatelessWidget {
     required this.onMarcarTodas,
   });
 
-  // ── Helpers ───────────────────────────────────────────────
-
   IconData _iconoTipo(String tipo) {
     switch (tipo) {
       case 'stock_bajo':
         return Icons.inventory_2_outlined;
       case 'agotado':
         return Icons.remove_shopping_cart;
+      // ✅ NUEVO: ícono para reposición
+      case 'reposicion':
+        return Icons.add_shopping_cart;
       default:
         return Icons.notifications_outlined;
     }
@@ -274,6 +259,9 @@ class _PanelContent extends StatelessWidget {
         return const Color(0xFFE67E22);
       case 'agotado':
         return const Color(0xFFE74C3C);
+      // ✅ NUEVO: color verde para reposición
+      case 'reposicion':
+        return const Color(0xFF27AE60);
       default:
         return Colors.grey;
     }
@@ -289,7 +277,6 @@ class _PanelContent extends StatelessWidget {
   }
 
   List<TextSpan> _construirMensaje(String mensaje, bool leida, Color color) {
-    // Patrón: "Solo quedan X unidades de Producto"
     final regexUnidades = RegExp(r'(.+?) (.+?) de (.+)');
     final matchUnidades = regexUnidades.firstMatch(mensaje);
     if (matchUnidades != null) {
@@ -310,7 +297,6 @@ class _PanelContent extends StatelessWidget {
       ];
     }
 
-    // Patrón: "Producto se ha agotado. Texto adicional"
     final regexAgotado = RegExp(r'^(.+?) se ha agotado\.(.+)$');
     final matchAgotado = regexAgotado.firstMatch(mensaje);
     if (matchAgotado != null) {
@@ -330,11 +316,8 @@ class _PanelContent extends StatelessWidget {
       ];
     }
 
-    // Fallback: texto plano
     return [TextSpan(text: mensaje)];
   }
-
-  // ── Build ─────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -470,7 +453,7 @@ class _PanelContent extends StatelessWidget {
 }
 
 // ══════════════════════════════════════════════════════════════
-// Tile individual de notificación
+// Tile individual
 // ══════════════════════════════════════════════════════════════
 class _NotificacionTile extends StatelessWidget {
   final IconData icono;
@@ -496,13 +479,11 @@ class _NotificacionTile extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        // Fondo levemente coloreado si no fue leída
         color: leida ? Colors.transparent : color.withOpacity(0.04),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Ícono circular ───────────────────────────
             Container(
               padding: const EdgeInsets.all(9),
               decoration: BoxDecoration(
@@ -516,8 +497,6 @@ class _NotificacionTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-
-            // ── Texto + tiempo ───────────────────────────
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -545,8 +524,6 @@ class _NotificacionTile extends StatelessWidget {
                 ],
               ),
             ),
-
-            // ── Indicador no leída + botón eliminar ──────
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
