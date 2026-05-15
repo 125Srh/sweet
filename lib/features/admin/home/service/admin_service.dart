@@ -256,4 +256,58 @@ class AdminService {
         .limit(50)
         .map((data) => List<Map<String, dynamic>>.from(data));
   }
+
+  Future<List<Map<String, dynamic>>> getPedidos() async {
+    try {
+      final res = await supabase
+          .from('pedido')
+          .select('''
+          id,
+          total,
+          estado,
+          fecha_pedido,
+          usuario:usuario_id (nombre, apellido)
+        ''')
+          .order('fecha_pedido', ascending: false);
+
+      return List<Map<String, dynamic>>.from(res);
+    } catch (e) {
+      print("❌ Error cargando pedidos: $e");
+      return [];
+    }
+  }
+
+  Future<void> actualizarEstadoPedido(String id, String estado) async {
+    try {
+      await supabase
+          .from('pedido')
+          .update({
+            'estado': estado,
+            'fecha_actualizacion': DateTime.now().toIso8601String(),
+          })
+          .eq('id', id);
+
+      print("✅ Estado actualizado");
+    } catch (e) {
+      print("❌ Error actualizando pedido: $e");
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getDetallePedido(String pedidoId) async {
+    try {
+      final res = await supabase
+          .from('pedido_detalle')
+          .select('''
+          cantidad,
+          subtotal,
+          producto:producto_id (nombre)
+        ''')
+          .eq('pedido_id', pedidoId);
+
+      return List<Map<String, dynamic>>.from(res);
+    } catch (e) {
+      print("❌ Error detalle pedido: $e");
+      return [];
+    }
+  }
 }

@@ -2,8 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../screens/admin_clients_screen.dart';           // ← HU-19
-import '../screens/admin_notifications_screen.dart';     // ← HU-22
+import '../screens/admin_clients_screen.dart'; // ← HU-19
+import '../screens/admin_notifications_screen.dart'; // ← HU-22
+import '../screens/admin_orders_screen.dart';
 
 class AdminDrawer extends StatelessWidget {
   final int selectedIndex;
@@ -94,9 +95,7 @@ class AdminDrawer extends StatelessWidget {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const AdminClientsScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const AdminClientsScreen()),
               );
             },
           ),
@@ -130,6 +129,18 @@ class AdminDrawer extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
               context.go('/reportes');
+            },
+          ),
+          item(
+            Icons.shopping_bag_outlined,
+            'Gestionar Pedidos',
+            selected: selectedIndex == 6,
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AdminOrdersScreen()),
+              );
             },
           ),
 
