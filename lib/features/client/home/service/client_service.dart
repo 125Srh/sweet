@@ -36,4 +36,13 @@ class ClientService {
 
     return List<Map<String, dynamic>>.from(response);
   }
+
+  Future<List<Map<String, dynamic>>> getAllProducts() async {
+    final response = await supabase
+        .from('producto')
+        .select()
+        .order('created_at', ascending: false);
+
+    return List<Map<String, dynamic>>.from(response);
+  }
 }

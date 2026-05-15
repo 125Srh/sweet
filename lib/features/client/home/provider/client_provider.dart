@@ -18,7 +18,8 @@ class ClientProvider extends ChangeNotifier {
 
     final results = await Future.wait([
       _service.getCategories(),
-      _service.getFeaturedProducts(),
+      //_service.getFeaturedProducts(),
+      _service.getAllProducts(),
     ]);
 
     categories = results[0];
@@ -46,7 +47,8 @@ class ClientProvider extends ChangeNotifier {
     selectedCategoryId = null;
     notifyListeners();
 
-    products = await _service.getFeaturedProducts();
+    //products = await _service.getFeaturedProducts();
+    products = await _service.getAllProducts();
 
     isLoading = false;
     notifyListeners();
