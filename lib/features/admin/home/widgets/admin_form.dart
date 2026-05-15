@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/admin_provider.dart';
+import 'package:image_picker/image_picker.dart';
+
+import 'dart:io';
 
 class AdminForm extends StatefulWidget {
   final Map<String, dynamic>? producto;
@@ -21,6 +25,10 @@ class _AdminFormState extends State<AdminForm> {
   String? categoriaId;
   String? marcaId;
   int _stockValue = 0;
+
+  File? _imagenFile;
+  String? _imagenUrl;
+  final picker = ImagePicker();
 
   static const _pink = Color(0xFFFF69B4);
   static const _darkPink = Color(0xFFD81B60);
@@ -168,6 +176,43 @@ class _AdminFormState extends State<AdminForm> {
     }
   }
 
+  Future<void> _seleccionarImagen() async {
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _imagenFile = File(pickedFile.path);
+      });
+
+      await _subirImagenSupabase();
+    }
+  }
+
+  Future<void> _subirImagenSupabase() async {
+    if (_imagenFile == null) return;
+
+    try {
+      final supabase = Supabase.instance.client;
+
+      final fileName = DateTime.now().millisecondsSinceEpoch.toString();
+
+      await supabase.storage.from('productos').upload(fileName, _imagenFile!);
+
+      final publicUrl = supabase.storage
+          .from('productos')
+          .getPublicUrl(fileName);
+
+      setState(() {
+        _imagenUrl = publicUrl;
+        _imagen.text = publicUrl; // 🔥 se guarda en tu campo
+      });
+
+      _showSnack("Imagen subida correctamente", isError: false);
+    } catch (e) {
+      _showSnack("Error al subir imagen", isError: true);
+    }
+  }
+
   void _showSnack(String msg, {required bool isError}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -288,7 +333,55 @@ class _AdminFormState extends State<AdminForm> {
                         _stockField(),
                         const SizedBox(height: 8),
 
-                        _input(_imagen, 'URL Imagen', Icons.image_outlined),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Imagen del producto",
+                              style: TextStyle(fontSize: 12),
+                            ),
+                            const SizedBox(height: 8),
+
+                            GestureDetector(
+                              onTap: _seleccionarImagen,
+                              child: Container(
+                                height: 150,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey[300]!),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: _imagenFile != null
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Image.file(
+                                          _imagenFile!,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      )
+                                    : (_imagenUrl != null
+                                          ? Image.network(
+                                              _imagenUrl!,
+                                              fit: BoxFit.cover,
+                                            )
+                                          : Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: const [
+                                                Icon(
+                                                  Icons.image_outlined,
+                                                  size: 40,
+                                                ),
+                                                SizedBox(height: 8),
+                                                Text("Tocar para subir imagen"),
+                                              ],
+                                            )),
+                              ),
+                            ),
+
+                            const SizedBox(height: 10),
+                          ],
+                        ),
                         const SizedBox(height: 4),
                         _dropdownCategoria(provider),
                         const SizedBox(height: 12),
