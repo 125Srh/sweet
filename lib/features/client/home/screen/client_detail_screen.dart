@@ -33,7 +33,11 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
     }
     final prodId = widget.product['id']?.toString() ?? '';
     final es = await FavoritesService.esFavorito(_userId!, prodId);
-    if (mounted) setState(() { _esFavorito = es; _loadingFav = false; });
+    if (mounted)
+      setState(() {
+        _esFavorito = es;
+        _loadingFav = false;
+      });
   }
 
   Future<void> _toggleFavorito() async {
@@ -43,14 +47,23 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
     try {
       final ahora = await FavoritesService.toggle(_userId!, prodId);
       if (mounted) {
-        setState(() { _esFavorito = ahora; _loadingFav = false; });
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(ahora ? '❤️ Agregado a favoritos' : 'Quitado de favoritos'),
-          backgroundColor: ahora ? const Color(0xFFFF69B4) : Colors.grey[700],
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          duration: const Duration(seconds: 2),
-        ));
+        setState(() {
+          _esFavorito = ahora;
+          _loadingFav = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              ahora ? '❤️ Agregado a favoritos' : 'Quitado de favoritos',
+            ),
+            backgroundColor: ahora ? const Color(0xFFFF69B4) : Colors.grey[700],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
       }
     } catch (_) {
       if (mounted) setState(() => _loadingFav = false);
@@ -68,29 +81,35 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
         precioUnitario: precio,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('🛒 $nombre agregado al carrito 💖'),
-          backgroundColor: const Color(0xFFD81B60),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('🛒 $nombre agregado al carrito 💖'),
+            backgroundColor: const Color(0xFFD81B60),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 4),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final image       = widget.product['imagen_url'];
-    final name        = widget.product['nombre'];
-    final price       = widget.product['precio'];
+    final image = widget.product['imagen_url'];
+    final name = widget.product['nombre'];
+    final price = widget.product['precio'];
     final description = widget.product['descripcion'] ?? 'Sin descripción';
 
     return Scaffold(
@@ -101,7 +120,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
           Stack(
             children: [
               SizedBox(
-                height: 300,
+                height: 450,
                 width: double.infinity,
                 child: image != null && image != ''
                     ? Image.network(
@@ -115,7 +134,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
 
               // 💕 GRADIENTE ROSADO — igual que el original
               Container(
-                height: 300,
+                height: 450,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -137,7 +156,10 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                 child: CircleAvatar(
                   backgroundColor: Colors.white,
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Color(0xFFD81B60)),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: Color(0xFFD81B60),
+                    ),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
@@ -153,7 +175,8 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                       ? const Padding(
                           padding: EdgeInsets.all(10),
                           child: SizedBox(
-                            width: 18, height: 18,
+                            width: 18,
+                            height: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               color: Color(0xFFFF69B4),
@@ -162,7 +185,9 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                         )
                       : IconButton(
                           icon: Icon(
-                            _esFavorito ? Icons.favorite : Icons.favorite_border,
+                            _esFavorito
+                                ? Icons.favorite
+                                : Icons.favorite_border,
                             color: const Color(0xFFFF69B4),
                           ),
                           onPressed: _toggleFavorito,
@@ -246,9 +271,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                     // 💖 BOTÓN SWIPE — ahora conectado al CartProvider real
                     SizedBox(
                       width: double.infinity,
-                      child: SwipeToCartButton(
-                        onConfirmed: _agregarAlCarrito,
-                      ),
+                      child: SwipeToCartButton(onConfirmed: _agregarAlCarrito),
                     ),
                   ],
                 ),

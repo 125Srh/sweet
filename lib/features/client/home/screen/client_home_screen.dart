@@ -10,6 +10,7 @@ import 'package:sweet/features/client/cart/provider/cart_provider.dart';
 import 'package:sweet/features/client/cart/screen/cart_screen.dart';
 import 'package:sweet/features/client/cart/widget/add_to_cart_button.dart';
 import 'package:sweet/features/client/favorites/screen/favorites_screen.dart';
+import 'package:sweet/features/client/home/widget/search_screen.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -511,7 +512,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             case 0:
               break;
             case 1:
-              _showComingSoon('Buscador');
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SearchScreen()),
+              ).then((_) => setState(() => _currentNav = 0));
               break;
             case 2:
               _irAlCarrito();
