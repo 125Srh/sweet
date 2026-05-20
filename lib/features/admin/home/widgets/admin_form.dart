@@ -21,6 +21,7 @@ class _AdminFormState extends State<AdminForm> {
   final _descripcion = TextEditingController();
   final _precio = TextEditingController();
   final _imagen = TextEditingController();
+  final _precioAdquisicion = TextEditingController();
 
   String? categoriaId;
   String? marcaId;
@@ -44,6 +45,7 @@ class _AdminFormState extends State<AdminForm> {
       _nombre.text = p['nombre'] ?? '';
       _descripcion.text = p['descripcion'] ?? '';
       _precio.text = p['precio'].toString();
+      _precioAdquisicion.text = p['precio_venta']?.toString() ?? '';
       _imagen.text = p['imagen_url'] ?? '';
       categoriaId = p['categoria_id'];
       marcaId = p['marca_id'];
@@ -56,6 +58,7 @@ class _AdminFormState extends State<AdminForm> {
     _nombre.dispose();
     _descripcion.dispose();
     _precio.dispose();
+    _precioAdquisicion.dispose();
     _imagen.dispose();
     super.dispose();
   }
@@ -80,6 +83,7 @@ class _AdminFormState extends State<AdminForm> {
         nombre: _nombre.text.trim(),
         descripcion: _descripcion.text.trim(),
         precio: double.parse(_precio.text),
+        precioAdquisicion: double.parse(_precioAdquisicion.text),
         stock: _stockValue,
         imagen: _imagen.text.trim(),
         categoriaId: categoriaId!,
@@ -91,6 +95,7 @@ class _AdminFormState extends State<AdminForm> {
         nombre: _nombre.text.trim(),
         descripcion: _descripcion.text.trim(),
         precio: double.parse(_precio.text),
+        precioAdquisicion: double.parse(_precioAdquisicion.text),
         stock: _stockValue,
         imagen: _imagen.text.trim(),
         categoriaId: categoriaId!,
@@ -208,7 +213,9 @@ class _AdminFormState extends State<AdminForm> {
       });
 
       _showSnack("Imagen subida correctamente", isError: false);
-    } catch (e) {
+    } catch (e, stack) {
+      print("❌ ERROR SUBIENDO IMAGEN: $e");
+      print("📌 STACK TRACE: $stack");
       _showSnack("Error al subir imagen", isError: true);
     }
   }
@@ -323,8 +330,14 @@ class _AdminFormState extends State<AdminForm> {
                         ),
                         _input(
                           _precio,
-                          'Precio (Bs.)',
+                          'Precio Venta (Bs.)',
                           Icons.attach_money,
+                          isNumber: true,
+                        ),
+                        _input(
+                          _precioAdquisicion,
+                          'Precio Adquisicion (Bs.)',
+                          Icons.point_of_sale,
                           isNumber: true,
                         ),
 
