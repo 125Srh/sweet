@@ -241,7 +241,7 @@ class AdminsProvider extends ChangeNotifier {
         'nombre': nombre,
         'descripcion': descripcion,
         'precio': precio,
-        'precio_venta': precioAdquisicion,
+        'precio_adquisicion': precioAdquisicion,
         'stock': stock,
         'imagen_url': imagen,
         'categoria_id': categoriaId,

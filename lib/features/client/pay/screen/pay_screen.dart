@@ -25,7 +25,7 @@ class _PayScreenState extends State<PayScreen> {
   final _formKey = GlobalKey<FormState>();
   String _metodoPago = 'tarjeta_simulada';
   String _tarjetaNumero = '';
-  final double _costoEnvio = 15.00;
+  final double _costoEnvio = 0.00;
 
   @override
   void initState() {
@@ -319,7 +319,7 @@ class _PayScreenState extends State<PayScreen> {
                   'Bs. ${cart.subtotal.toStringAsFixed(2)}',
                 ),
                 const SizedBox(height: 8),
-                _filaTotal('Envío', 'Bs. $_costoEnvio'),
+                _filaTotal('Envío', _costoEnvio > 0 ? 'Bs. $_costoEnvio' : 'Gratis'),
                 const SizedBox(height: 12),
                 const Divider(color: Color(0xFFFFE4E9)),
                 const SizedBox(height: 12),

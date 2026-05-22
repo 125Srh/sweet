@@ -9,14 +9,14 @@ void main() async {
 
   try {
     final response = await supabase
-        .from('pedido')
+        .from('producto')
         .select()
         .limit(1);
 
     if (response.isNotEmpty) {
         print(response.first.keys.toList());
     } else {
-        print('No hay pedidos');
+        print('No hay productos');
     }
   } catch (e) {
     print('Error: $e');

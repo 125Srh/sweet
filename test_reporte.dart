@@ -9,27 +9,12 @@ void main() async {
 
   try {
     final response = await supabase
-        .from('pedido')
+        .from('producto')
         .select()
-        .or('estado.eq.completado,estado.eq.pendiente')
-        .order('created_at', ascending: false);
+        .limit(2);
 
-    print('Total pedidos obtenidos: ${response.length}');
     for (var r in response) {
-      print(r);
-      try {
-        final id = r['id'].toString();
-        final pedidoId = (r['pedido_id'] ?? r['id']).toString();
-        final fecha = DateTime.parse(r['created_at'] ?? r['fecha_creacion']);
-        final subtotal = (r['subtotal'] as num?)?.toDouble() ?? 0;
-        final costoEnvio = (r['costo_envio'] as num?)?.toDouble() ?? 0;
-        final total = (r['total'] as num?)?.toDouble() ?? 0;
-        final metodoPago = r['metodo_pago'] ?? '';
-        final estado = r['estado'] ?? 'pendiente';
-        print('Parsed: ID: $id, Total: $total, Fecha: $fecha');
-      } catch (e) {
-        print('ERROR parseando fila: $e');
-      }
+      print(jsonEncode(r));
     }
   } catch (e) {
     print('Error_catch: $e');
