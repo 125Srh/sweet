@@ -57,6 +57,7 @@ class PayProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // 1. Crear el pedido
       final pedidoId = await PayService.crearPedido(
         usuarioId: _userId!,
         subtotal: subtotal,
@@ -69,11 +70,38 @@ class PayProvider extends ChangeNotifier {
         productos: productos,
       );
 
+      // 2. Vaciar el carrito
       await PayService.vaciarCarrito(_userId!);
+
+      // 3. Obtener nombre del cliente
+      final usuarioRes = await Supabase.instance.client
+          .from('usuario')
+          .select('nombre, apellido')
+          .eq('id', _userId!)
+          .maybeSingle();
+
+      final nombre = usuarioRes != null
+          ? '${usuarioRes['nombre'] ?? ''} ${usuarioRes['apellido'] ?? ''}'.trim()
+          : 'Cliente';
+
+      // 4. Crear notificación de venta usando solo los campos que
+      //    existen en tu tabla notificaciones
+      try {
+        await Supabase.instance.client.from('notificaciones').insert({
+          'tipo': 'nueva_venta',
+          'titulo': 'Nueva venta realizada',
+          'mensaje': '$nombre realizó un pedido por Bs. ${total.toStringAsFixed(2)}',
+          'leida': false,
+        });
+        print(' Notificación de venta creada');
+      } catch (e) {
+        // No interrumpir el flujo si falla la notificación
+        print(' Error creando notificación de venta: $e');
+      }
 
       _successMessage = '¡Pago exitoso! Pedido #${pedidoId.substring(0, 8)}';
       notifyListeners();
-      
+
       return true;
     } catch (e) {
       _errorMessage = 'Error al procesar el pago: ${e.toString()}';
