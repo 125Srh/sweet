@@ -16,14 +16,13 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
   List<Map<String, dynamic>> _clientes = [];
   List<Map<String, dynamic>> _filtrados = [];
   bool _loading = true;
+  String _filtroEstado = 'todos';
 
   static const _pink = Color(0xFFFF1362);
-  static const _pinkLight = Color(0xFFFF69B4);
 
   @override
   void initState() {
     super.initState();
-    // Escucha cambios en tiempo real
     _service.streamClientes().listen((lista) {
       if (!mounted) return;
       setState(() {
@@ -44,8 +43,8 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
     final q = texto.toLowerCase();
     setState(() {
       _filtrados = _clientes.where((c) {
-        final nombre   = '${c['nombre'] ?? ''} ${c['apellido'] ?? ''}'.toLowerCase();
-        final correo   = (c['email'] ?? '').toString().toLowerCase();
+        final nombre = '${c['nombre'] ?? ''} ${c['apellido'] ?? ''}'.toLowerCase();
+        final correo = (c['email'] ?? '').toString().toLowerCase();
         return nombre.contains(q) || correo.contains(q);
       }).toList();
     });
@@ -58,6 +57,52 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
     return '${dt.day.toString().padLeft(2, '0')}/'
         '${dt.month.toString().padLeft(2, '0')}/'
         '${dt.year}';
+  }
+
+  Widget _buildFiltros() {
+    final filtros = [
+      {'valor': 'todos',       'label': 'Todos',       'color': Colors.grey},
+      {'valor': 'activo',      'label': 'Activos',     'color': Colors.green},
+      {'valor': 'inactivo',    'label': 'Inactivos',   'color': Colors.orange},
+      {'valor': 'sin_compras', 'label': 'Sin compras', 'color': Colors.red},
+    ];
+
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: filtros.map((f) {
+            final seleccionado = _filtroEstado == f['valor'];
+            final color = f['color'] as Color;
+            return GestureDetector(
+              onTap: () => setState(() => _filtroEstado = f['valor'] as String),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                decoration: BoxDecoration(
+                  color: seleccionado ? color : color.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: seleccionado ? color : color.withOpacity(0.3),
+                  ),
+                ),
+                child: Text(
+                  f['label'] as String,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: seleccionado ? Colors.white : color,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
   }
 
   @override
@@ -77,7 +122,6 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
               color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
         ),
         actions: [
-          // Badge con total de clientes
           if (_clientes.isNotEmpty)
             Container(
               margin: const EdgeInsets.only(right: 16),
@@ -98,7 +142,7 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
       ),
       body: Column(
         children: [
-          // ── Barra de búsqueda ────────────────────────────
+          // ── Barra de búsqueda ──────────────────────────
           Container(
             color: _pink,
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -109,8 +153,7 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
               decoration: InputDecoration(
                 hintText: 'Buscar por nombre o correo...',
                 hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-                prefixIcon:
-                    const Icon(Icons.search, color: Colors.white),
+                prefixIcon: const Icon(Icons.search, color: Colors.white),
                 suffixIcon: _searchCtrl.text.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear, color: Colors.white),
@@ -131,24 +174,52 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
             ),
           ),
 
-          // ── Contenido ────────────────────────────────────
+          // ── Contenido ──────────────────────────────────
           Expanded(
             child: _loading
-                ? const Center(
-                    child:
-                        CircularProgressIndicator(color: _pink))
-                : _filtrados.isEmpty
-                    ? _emptyState()
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _filtrados.length,
-                        itemBuilder: (_, i) =>
-                            _ClienteTile(
-                          cliente: _filtrados[i],
-                          fecha: _formatearFecha(
-                              _filtrados[i]['created_at']),
-                        ),
+                ? const Center(child: CircularProgressIndicator(color: _pink))
+                : Column(
+                    children: [
+                      // ── Chips de filtro ────────────────
+                      _buildFiltros(),
+                      const Divider(height: 1),
+
+                      // ── Lista ─────────────────────────
+                      Expanded(
+                        child: _filtrados.isEmpty
+                            ? _emptyState()
+                            : ListView.builder(
+                                padding: const EdgeInsets.all(16),
+                                itemCount: _filtrados.length,
+                                itemBuilder: (_, i) {
+                                  final cliente = _filtrados[i];
+
+                                  if (_filtroEstado != 'todos') {
+                                    return FutureBuilder<String>(
+                                      future: _service.getEstadoCliente(
+                                        cliente['id'].toString(),
+                                        cliente['created_at'] ?? '',
+                                      ),
+                                      builder: (context, snap) {
+                                        if (!snap.hasData) return const SizedBox();
+                                        if (snap.data != _filtroEstado) return const SizedBox();
+                                        return _ClienteTile(
+                                          cliente: cliente,
+                                          fecha: _formatearFecha(cliente['created_at']),
+                                        );
+                                      },
+                                    );
+                                  }
+
+                                  return _ClienteTile(
+                                    cliente: cliente,
+                                    fecha: _formatearFecha(cliente['created_at']),
+                                  );
+                                },
+                              ),
                       ),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -160,8 +231,7 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.people_outline,
-              size: 70, color: Colors.grey[300]),
+          Icon(Icons.people_outline, size: 70, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
             _searchCtrl.text.isNotEmpty
@@ -186,19 +256,58 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
   }
 }
 
-// ── Tarjeta de cliente ────────────────────────────────────────
-class _ClienteTile extends StatelessWidget {
+// ── Tarjeta de cliente ─────────────────────────────────────────
+class _ClienteTile extends StatefulWidget {
   final Map<String, dynamic> cliente;
   final String fecha;
 
   const _ClienteTile({required this.cliente, required this.fecha});
 
   @override
+  State<_ClienteTile> createState() => _ClienteTileState();
+}
+
+class _ClienteTileState extends State<_ClienteTile> {
+  final AdminService _service = AdminService();
+  String _estado = 'cargando';
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarEstado();
+  }
+
+  Future<void> _cargarEstado() async {
+    final estado = await _service.getEstadoCliente(
+      widget.cliente['id'].toString(),
+      widget.cliente['created_at'] ?? '',
+    );
+    if (mounted) setState(() => _estado = estado);
+  }
+
+  Color get _badgeColor {
+    switch (_estado) {
+      case 'activo':      return Colors.green;
+      case 'inactivo':    return Colors.orange;
+      case 'sin_compras': return Colors.red;
+      default:            return Colors.grey;
+    }
+  }
+
+  String get _badgeLabel {
+    switch (_estado) {
+      case 'activo':      return 'Activo';
+      case 'inactivo':    return 'Inactivo';
+      case 'sin_compras': return 'Sin compras';
+      default:            return '...';
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final nombre   = '${cliente['nombre'] ?? ''} ${cliente['apellido'] ?? ''}'.trim();
-    final correo   = cliente['email']?.toString() ?? '—';
-    final telefono = cliente['telefono']?.toString() ?? '—';
-    final activo   = cliente['activo'] as bool? ?? true;
+    final nombre   = '${widget.cliente['nombre'] ?? ''} ${widget.cliente['apellido'] ?? ''}'.trim();
+    final correo   = widget.cliente['email']?.toString() ?? '—';
+    final telefono = widget.cliente['telefono']?.toString() ?? '—';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -229,9 +338,7 @@ class _ClienteTile extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  nombre.isNotEmpty
-                      ? nombre[0].toUpperCase()
-                      : '?',
+                  nombre.isNotEmpty ? nombre[0].toUpperCase() : '?',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -253,31 +360,25 @@ class _ClienteTile extends StatelessWidget {
                         child: Text(
                           nombre.isNotEmpty ? nombre : 'Sin nombre',
                           style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15),
+                              fontWeight: FontWeight.bold, fontSize: 15),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      // Badge activo / inactivo — T5
+                      // Badge de estado
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: activo
-                              ? Colors.green.withOpacity(0.1)
-                              : Colors.red.withOpacity(0.1),
+                          color: _badgeColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: activo ? Colors.green : Colors.red,
-                            width: 1,
-                          ),
+                          border: Border.all(color: _badgeColor, width: 1),
                         ),
                         child: Text(
-                          activo ? 'Activo' : 'Inactivo',
+                          _badgeLabel,
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: activo ? Colors.green : Colors.red,
+                            color: _badgeColor,
                           ),
                         ),
                       ),
@@ -304,7 +405,7 @@ class _ClienteTile extends StatelessWidget {
                         style: const TextStyle(
                             fontSize: 13, color: Colors.black54)),
                     const Spacer(),
-                    Text('Desde $fecha',
+                    Text('Desde ${widget.fecha}',
                         style: const TextStyle(
                             fontSize: 11, color: Colors.black38)),
                   ]),

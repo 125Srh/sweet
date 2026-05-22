@@ -79,7 +79,6 @@ class AdminService {
   // 👥 CLIENTES — HU-19
   // ══════════════════════════════════════════════════════════
 
-  /// Trae todos los usuarios con rol 'cliente' desde Supabase
   Future<List<Map<String, dynamic>>> getClientes() async {
     try {
       final res = await supabase
@@ -94,7 +93,6 @@ class AdminService {
     }
   }
 
-  /// Stream en tiempo real de clientes registrados
   Stream<List<Map<String, dynamic>>> streamClientes() {
     return supabase
         .from('usuario')
@@ -102,6 +100,34 @@ class AdminService {
         .eq('rol', 'cliente')
         .order('created_at', ascending: false)
         .map((data) => List<Map<String, dynamic>>.from(data));
+  }
+
+  // ══════════════════════════════════════════════════════════
+  // 📊 ESTADO DE CLIENTES
+  // ══════════════════════════════════════════════════════════
+
+  Future<String> getEstadoCliente(String clienteId, String createdAt) async {
+    try {
+      final pedidos = await supabase
+          .from('pedido')
+          .select('fecha_pedido')
+          .eq('usuario_id', clienteId)
+          .order('fecha_pedido', ascending: false)
+          .limit(1);
+
+      if (pedidos.isEmpty) return 'sin_compras';
+
+      final ultimoPedido = DateTime.tryParse(pedidos[0]['fecha_pedido'] ?? '');
+      if (ultimoPedido != null &&
+          DateTime.now().difference(ultimoPedido).inDays <= 60) {
+        return 'activo';
+      }
+
+      return 'inactivo';
+    } catch (e) {
+      print("❌ Error obteniendo estado cliente: $e");
+      return 'sin_compras';
+    }
   }
 
   // ══════════════════════════════════════════════════════════
@@ -152,7 +178,6 @@ class AdminService {
     }
   }
 
-  /// Crea una notificación de venta nueva — HU-22
   Future<void> crearNotificacionVenta({
     required String nombreCliente,
     required double totalPedido,
@@ -177,8 +202,7 @@ class AdminService {
     try {
       await supabase
           .from('notificaciones')
-          .update({'leida': true})
-          .eq('id', id);
+          .update({'leida': true}).eq('id', id);
     } catch (e) {
       print("❌ Error marcando notificación como leída: $e");
     }
@@ -188,8 +212,7 @@ class AdminService {
     try {
       await supabase
           .from('notificaciones')
-          .update({'leida': true})
-          .eq('leida', false);
+          .update({'leida': true}).eq('leida', false);
     } catch (e) {
       print("❌ Error marcando todas como leídas: $e");
     }
@@ -246,7 +269,6 @@ class AdminService {
         .map((data) => List<Map<String, dynamic>>.from(data));
   }
 
-  /// Stream de notificaciones de ventas en tiempo real — HU-22
   Stream<List<Map<String, dynamic>>> streamNotificacionesVentas() {
     return supabase
         .from('notificaciones')
@@ -259,17 +281,13 @@ class AdminService {
 
   Future<List<Map<String, dynamic>>> getPedidos() async {
     try {
-      final res = await supabase
-          .from('pedido')
-          .select('''
+      final res = await supabase.from('pedido').select('''
           id,
           total,
           estado,
           fecha_pedido,
           usuario:usuario_id (nombre, apellido)
-        ''')
-          .order('fecha_pedido', ascending: false);
-
+        ''').order('fecha_pedido', ascending: false);
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {
       print("❌ Error cargando pedidos: $e");
@@ -279,14 +297,10 @@ class AdminService {
 
   Future<void> actualizarEstadoPedido(String id, String estado) async {
     try {
-      await supabase
-          .from('pedido')
-          .update({
-            'estado': estado,
-            'fecha_actualizacion': DateTime.now().toIso8601String(),
-          })
-          .eq('id', id);
-
+      await supabase.from('pedido').update({
+        'estado': estado,
+        'fecha_actualizacion': DateTime.now().toIso8601String(),
+      }).eq('id', id);
       print("✅ Estado actualizado");
     } catch (e) {
       print("❌ Error actualizando pedido: $e");
@@ -295,21 +309,15 @@ class AdminService {
 
   Future<List<Map<String, dynamic>>> getDetallePedido(String pedidoId) async {
     try {
-      final res = await supabase
-          .from('pedido_detalle')
-          .select('''
+      final res = await supabase.from('pedido_detalle').select('''
           cantidad,
           subtotal,
           producto:producto_id (nombre)
-        ''')
-          .eq('pedido_id', pedidoId);
-
+        ''').eq('pedido_id', pedidoId);
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {
       print("❌ Error detalle pedido: $e");
       return [];
     }
   }
-
-  
 }
