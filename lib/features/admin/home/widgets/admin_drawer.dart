@@ -176,9 +176,26 @@ class AdminDrawer extends StatelessWidget {
               );
 
               if (confirmar == true) {
-                await Supabase.instance.client.auth.signOut();
-                if (!context.mounted) return;
-                context.go('/login');
+                // 🌟 1. CERRAR EL DRAWER PRIMERO: Sacamos el Drawer de la pantalla
+                // usando el contexto original para que no intente redibujarse sin sesión.
+                Navigator.pop(context);
+
+                // 🌟 2. ESPERAR UN MILISEGUNDO DE SEGURIDAD: Damos tiempo a la animación
+                // de cierre del drawer para evitar cualquier bache gráfico.
+                await Future.delayed(const Duration(milliseconds: 100));
+
+                try {
+                  // 3. Ejecutamos el cierre de sesión en Supabase
+                  await Supabase.instance.client.auth.signOut();
+
+                  // 4. Verificación de montaje con soporte para BuildContext en Stateless
+                  if (!context.mounted) return;
+
+                  // 5. Redirección limpia al Login
+                  context.go('/login');
+                } catch (e) {
+                  debugPrint("❌ [DRAWER ERROR] Falló al hacer signOut: $e");
+                }
               }
             },
           ),

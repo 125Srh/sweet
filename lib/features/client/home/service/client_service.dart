@@ -45,4 +45,30 @@ class ClientService {
 
     return List<Map<String, dynamic>>.from(response);
   }
+
+  Future<List<Map<String, dynamic>>> getMisPedidos() async {
+    final user = supabase.auth.currentUser;
+
+    if (user == null) {
+      throw Exception("Usuario no autenticado");
+    }
+
+    final res = await supabase
+        .from('pedido')
+        .select()
+        .eq('usuario_id', user.id)
+        .order('fecha_pedido', ascending: false);
+
+    return List<Map<String, dynamic>>.from(res);
+  }
+
+  Future<void> marcarComoRecibido(String pedidoId) async {
+    await supabase
+        .from('pedido')
+        .update({
+          'estado': 'recibido',
+          'fecha_actualizacion': DateTime.now().toIso8601String(),
+        })
+        .eq('id', pedidoId);
+  }
 }

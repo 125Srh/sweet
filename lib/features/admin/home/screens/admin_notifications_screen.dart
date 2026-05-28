@@ -70,7 +70,9 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
       // 3️⃣ Traer pedidos recientes
       final pedidos = await Supabase.instance.client
           .from('pedido')
-          .select('id, total, estado, fecha_pedido, usuario:usuario_id(nombre, apellido)')
+          .select(
+            'id, total, estado, fecha_pedido, usuario:usuario_id(nombre, apellido)',
+          )
           .order('fecha_pedido', ascending: false)
           .limit(30);
 
@@ -79,14 +81,18 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
 
       // Buscar por monto + tiempo
       for (final pedido in pedidos) {
-        final dtPedido = DateTime.tryParse(pedido['fecha_pedido']?.toString() ?? '');
+        final dtPedido = DateTime.tryParse(
+          pedido['fecha_pedido']?.toString() ?? '',
+        );
         final totalPedido = double.tryParse(pedido['total']?.toString() ?? '');
 
-        final coincideMonto = monto != null &&
+        final coincideMonto =
+            monto != null &&
             totalPedido != null &&
             (monto - totalPedido).abs() < 0.5;
 
-        final coincideTiempo = dtNotif != null &&
+        final coincideTiempo =
+            dtNotif != null &&
             dtPedido != null &&
             dtNotif.difference(dtPedido).abs().inMinutes <= 10;
 
@@ -99,7 +105,9 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
       // Fallback 1: solo por tiempo ±5 min
       if (pedidoEncontrado == null && dtNotif != null) {
         for (final pedido in pedidos) {
-          final dtPedido = DateTime.tryParse(pedido['fecha_pedido']?.toString() ?? '');
+          final dtPedido = DateTime.tryParse(
+            pedido['fecha_pedido']?.toString() ?? '',
+          );
           if (dtPedido != null &&
               dtNotif.difference(dtPedido).abs().inMinutes <= 5) {
             pedidoEncontrado = pedido;
@@ -165,35 +173,43 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                   color: _pink.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Row(children: [
-                  const Icon(Icons.person_outline, color: _pink, size: 16),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      pedidoInfo ?? notificacion['mensaje'] ?? '',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: _pink,
+                child: Row(
+                  children: [
+                    const Icon(Icons.person_outline, color: _pink, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        pedidoInfo ?? notificacion['mensaje'] ?? '',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: _pink,
+                        ),
                       ),
                     ),
-                  ),
-                ]),
+                  ],
+                ),
               ),
               const SizedBox(height: 12),
 
               detalles.isEmpty
                   ? const Padding(
                       padding: EdgeInsets.symmetric(vertical: 20),
-                      child: Column(children: [
-                        Icon(Icons.receipt_long, size: 40, color: Colors.grey),
-                        SizedBox(height: 8),
-                        Text(
-                          'No se encontraron productos\npara este pedido',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ]),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.receipt_long,
+                            size: 40,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'No se encontraron productos\npara este pedido',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
                     )
                   : SizedBox(
                       height: 250,
@@ -214,30 +230,36 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                                 ),
                               ],
                             ),
-                            child: Row(children: [
-                              const Icon(Icons.shopping_bag, color: Colors.pink),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  item['producto']?['nombre'] ?? '—',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w500),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.shopping_bag,
+                                  color: Colors.pink,
                                 ),
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text('x${item['cantidad']}'),
-                                  Text(
-                                    'Bs. ${item['subtotal']}',
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    item['producto']?['nombre'] ?? '—',
                                     style: const TextStyle(
-                                      color: Colors.pink,
-                                      fontWeight: FontWeight.bold,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                ],
-                              ),
-                            ]),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text('x${item['cantidad']}'),
+                                    Text(
+                                      'Bs. ${item['subtotal']}',
+                                      style: const TextStyle(
+                                        color: Colors.pink,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           );
                         },
                       ),
@@ -248,11 +270,14 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _pink,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20)),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cerrar',
-                    style: TextStyle(color: Colors.white)),
+                child: const Text(
+                  'Cerrar',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ],
           ),
@@ -272,82 +297,91 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Row(children: [
-          const Text(
-            'Notificaciones de ventas',
-            style: TextStyle(
+        title: Row(
+          children: [
+            const Text(
+              'Notificaciones de ventas',
+              style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 17),
-          ),
-          if (_noLeidas > 0) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                '$_noLeidas',
-                style: const TextStyle(
-                    color: _pink,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold),
+                fontSize: 17,
               ),
             ),
+            if (_noLeidas > 0) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '$_noLeidas',
+                  style: const TextStyle(
+                    color: _pink,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ],
-        ]),
+        ),
         actions: [
           if (_noLeidas > 0)
             TextButton(
               onPressed: _service.marcarTodasComoLeidas,
-              child: const Text('Marcar todas',
-                  style: TextStyle(color: Colors.white, fontSize: 12)),
+              child: const Text(
+                'Marcar todas',
+                style: TextStyle(color: Colors.white, fontSize: 12),
+              ),
             ),
         ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: _pink))
           : _notificaciones.isEmpty
-              ? _emptyState()
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _notificaciones.length,
-                  itemBuilder: (_, i) {
-                    final n = _notificaciones[i];
-                    return _VentaTile(
-                      notificacion: n,
-                      tiempo: _formatearFecha(n['creada_en']),
-                      onTap: () => _abrirDetalle(n),
-                      onEliminar: () =>
-                          _service.eliminarNotificacion(n['id'].toString()),
-                    );
-                  },
-                ),
+          ? _emptyState()
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _notificaciones.length,
+              itemBuilder: (_, i) {
+                final n = _notificaciones[i];
+                return _VentaTile(
+                  notificacion: n,
+                  tiempo: _formatearFecha(n['creada_en']),
+                  onTap: () => _abrirDetalle(n),
+                  onEliminar: () =>
+                      _service.eliminarNotificacion(n['id'].toString()),
+                );
+              },
+            ),
     );
   }
 
   Widget _emptyState() => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.notifications_none, size: 70, color: Colors.grey[300]),
-            const SizedBox(height: 16),
-            const Text('Sin notificaciones de ventas',
-                style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black45,
-                    fontWeight: FontWeight.w500)),
-            const SizedBox(height: 8),
-            Text(
-              'Aquí aparecerán los pedidos\nque realicen los clientes',
-              style: TextStyle(fontSize: 13, color: Colors.grey[400]),
-              textAlign: TextAlign.center,
-            ),
-          ],
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.notifications_none, size: 70, color: Colors.grey[300]),
+        const SizedBox(height: 16),
+        const Text(
+          'Sin notificaciones de ventas',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.black45,
+            fontWeight: FontWeight.w500,
+          ),
         ),
-      );
+        const SizedBox(height: 8),
+        Text(
+          'Aquí aparecerán los pedidos\nque realicen los clientes',
+          style: TextStyle(fontSize: 13, color: Colors.grey[400]),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -423,8 +457,9 @@ class _VentaTile extends StatelessWidget {
                       Text(
                         titulo,
                         style: TextStyle(
-                          fontWeight:
-                              leida ? FontWeight.normal : FontWeight.bold,
+                          fontWeight: leida
+                              ? FontWeight.normal
+                              : FontWeight.bold,
                           fontSize: 14,
                           color: leida ? Colors.black54 : Colors.black87,
                         ),
@@ -434,52 +469,63 @@ class _VentaTile extends StatelessWidget {
                         mensaje,
                         style: TextStyle(
                           fontSize: 13,
-                          color:
-                              leida ? Colors.grey : const Color(0xFFD81B60),
-                          fontWeight:
-                              leida ? FontWeight.normal : FontWeight.w500,
+                          color: leida ? Colors.grey : const Color(0xFFD81B60),
+                          fontWeight: leida
+                              ? FontWeight.normal
+                              : FontWeight.w500,
                         ),
                       ),
                       const SizedBox(height: 6),
-                      Row(children: [
-                        Icon(
-                          Icons.touch_app_outlined,
-                          size: 12,
-                          color: leida
-                              ? Colors.grey[400]
-                              : const Color(0xFFFF69B4),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Toca para ver el pedido',
-                          style: TextStyle(
-                            fontSize: 11,
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.touch_app_outlined,
+                            size: 12,
                             color: leida
                                 ? Colors.grey[400]
                                 : const Color(0xFFFF69B4),
                           ),
-                        ),
-                        const Spacer(),
-                        Text(tiempo,
-                            style:
-                                TextStyle(fontSize: 11, color: Colors.grey[400])),
-                        if (!leida) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFF1362),
-                              borderRadius: BorderRadius.circular(10),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Toca para ver el pedido',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: leida
+                                  ? Colors.grey[400]
+                                  : const Color(0xFFFF69B4),
                             ),
-                            child: const Text('Nueva',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold)),
                           ),
+                          const Spacer(),
+                          Text(
+                            tiempo,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                          if (!leida) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFF1362),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Text(
+                                'Nueva',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ]),
+                      ),
                     ],
                   ),
                 ),

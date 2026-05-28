@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sweet/features/client/home/screen/client_detail_screen.dart';
+import 'package:sweet/main.dart';
 import '../widget/client_category_item.dart';
 import 'package:provider/provider.dart';
 import '../provider/client_provider.dart';
@@ -11,6 +12,9 @@ import 'package:sweet/features/client/cart/screen/cart_screen.dart';
 import 'package:sweet/features/client/cart/widget/add_to_cart_button.dart';
 import 'package:sweet/features/client/favorites/screen/favorites_screen.dart';
 import 'package:sweet/features/client/home/widget/search_screen.dart';
+import 'package:sweet/features/client/home/screen/client_orders_screen.dart';
+
+import 'package:sweet/main.dart';
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -32,7 +36,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   }
 
   void _showComingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    // 🌟 1. Limpiamos cualquier SnackBar activo o colgado para detener sus animaciones
+    messengerKey.currentState?.clearSnackBars();
+
+    // 🌟 2. Mostramos el nuevo usando la clave global sin tocar el 'context' de la pantalla
+    messengerKey.currentState?.showSnackBar(
       SnackBar(
         content: Text('🚧 $feature - ¡Próximamente!'),
         backgroundColor: const Color(0xFFFF69B4),
@@ -81,51 +89,113 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               borderRadius: BorderRadius.circular(14),
             ),
             onSelected: (value) async {
-              switch (value) {
-                case 'pedidos':
-                  _showComingSoon('Mis pedidos');
-                  break;
-                case 'favoritos':
-                  _irAFavoritos();
-                  break;
-                case 'logout':
-                  final confirmar = await showDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      title: const Text('Cerrar sesión'),
-                      content: const Text(
-                        '¿Estás segura que deseas salir de Sweet?',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx, false),
-                          child: const Text('Cancelar'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx, true),
-                          child: const Text(
-                            'Salir',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                  if (confirmar == true && mounted) {
-                    await Supabase.instance.client.auth.signOut();
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Sesión cerrada'),
-                        backgroundColor: Color(0xFFFF69B4),
+              // 🔍 Diagnóstico en vivo
+              debugPrint('🚀 [DIAGNÓSTICO] PopupMenu seleccionado: $value');
+              debugPrint('📌 [DIAGNÓSTICO] ¿El Home está montado?: $mounted');
+
+              try {
+                // Intentamos limpiar SnackBars antes de que falle el framework
+                messengerKey.currentState?.clearSnackBars();
+
+                switch (value) {
+                  case 'pedidos':
+                    debugPrint(
+                      '🚀 [DIAGNÓSTICO] Intentando abrir ClientOrdersScreen...',
+                    );
+                    if (!mounted) {
+                      debugPrint(
+                        '⚠️ [ALERTA] Intentaste abrir pedidos en un widget desactivado!',
+                      );
+                      return;
+                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ClientOrdersScreen(),
                       ),
                     );
-                    context.go('/login');
-                  }
-                  break;
+                    break;
+
+                  case 'favoritos':
+                    if (!mounted) return;
+                    _irAFavoritos();
+                    break;
+
+                  case 'logout':
+                    debugPrint(
+                      '🚀 [DIAGNÓSTICO] Abriendo diálogo de cerrar sesión...',
+                    );
+                    if (!mounted) return;
+
+                    final confirmar = await showDialog<bool>(
+                      context: context,
+                      useRootNavigator:
+                          true, // Despliega la alerta en el nodo raíz
+                      builder: (ctx) => AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        title: const Text('Cerrar sesión'),
+                        content: const Text(
+                          '¿Estás segura que deseas salir de Sweet?',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Cancelar'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text(
+                              'Salir',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirmar == true) {
+                      debugPrint(
+                        '🚀 [DIAGNÓSTICO] Confirmación aceptada. Ejecutando SignOut...',
+                      );
+
+                      // 🌟 PASO 1: Capturamos una referencia global del ScaffoldMessenger antes de limpiar nada
+                      final messenger = messengerKey.currentState;
+
+                      // 🌟 PASO 2: REDIRECCIÓN PREVENTIVA IMPECABLE
+                      // En lugar de esperar a que termine Supabase, movemos al usuario YA al login.
+                      // Esto desmonta de forma segura el Home y evita que los listeners del Provider choquen con él.
+                      if (mounted) {
+                        context.go('/login');
+                      }
+
+                      // 🌟 PASO 3: RETARDAMOS EL SIGNOUT UNA FRACCIÓN DE SEGUNDO
+                      // Le da tiempo a Flutter de limpiar el árbol de widgets de la pantalla vieja
+                      Future.delayed(const Duration(milliseconds: 100), () async {
+                        try {
+                          await Supabase.instance.client.auth.signOut();
+
+                          // Muestra el mensaje de éxito usando la clave global estable
+                          messenger?.clearSnackBars();
+                          messenger?.showSnackBar(
+                            const SnackBar(
+                              content: Text('Sesión cerrada correctamente'),
+                              backgroundColor: Color(0xFFFF69B4),
+                            ),
+                          );
+                        } catch (signOutError) {
+                          debugPrint(
+                            '❌ Error real interno en Supabase SignOut: $signOutError',
+                          );
+                        }
+                      });
+                    }
+                    break;
+                }
+              } catch (e, stackTrace) {
+                debugPrint('❌ [ERROR DETECTADO EN POPUPMENU]: $e');
+                debugPrint('📋 STACKTRACE DEL ERROR:\n$stackTrace');
               }
             },
             itemBuilder: (ctx) => [

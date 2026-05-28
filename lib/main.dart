@@ -25,7 +25,9 @@ void main() async {
         ChangeNotifierProvider(create: (_) => RegisterProvider()),
         ChangeNotifierProvider(create: (_) => AdminsProvider()),
         ChangeNotifierProvider(create: (_) => ClientProvider()),
-        ChangeNotifierProvider(create: (_) => AddressProvider()), // ← SOLO AGREGAR ESTA LÍNEAsarahi
+        ChangeNotifierProvider(
+          create: (_) => AddressProvider(),
+        ), // ← SOLO AGREGAR ESTA LÍNEAsarahi
         ChangeNotifierProvider(create: (_) => CartProvider()), // ← añadido
       ],
       child: const SweetApp(),
@@ -43,6 +45,10 @@ class SweetApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       routerConfig: router,
+      scaffoldMessengerKey: messengerKey,
     );
   }
 }
+
+final GlobalKey<ScaffoldMessengerState> messengerKey =
+    GlobalKey<ScaffoldMessengerState>();
