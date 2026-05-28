@@ -12,7 +12,7 @@ class ReporteService {
       final response = await _db
           .from('pedido')
           .select('*, pedido_detalle(*)')
-          .or('estado.eq.completado,estado.eq.pendiente')
+          .or('estado.eq.recibido,estado.eq.pendiente')
           .gte('fecha_pedido', inicio.toIso8601String())
           .lte('fecha_pedido', fin.toIso8601String())
           .order('fecha_pedido', ascending: true);

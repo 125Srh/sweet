@@ -132,6 +132,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                     : "Orden";
 
                 return Container(
+                  key: ValueKey(pedido['id']),
                   margin: const EdgeInsets.symmetric(vertical: 8),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -304,6 +305,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                       ),
                                     )
                                   : DropdownButtonFormField<String>(
+                                      key: ValueKey('dropdown_${pedido['id']}'),
                                       value: estadosAdmin.contains(estado)
                                           ? estado
                                           : 'pendiente',
