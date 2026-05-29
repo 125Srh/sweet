@@ -16,7 +16,6 @@ class PayService {
     required List<Map<String, dynamic>> productos,
   }) async {
     try {
-      // ── 1. Insertar pedido ──────────────────────────────────────────
       final pedidoResult = await _db
           .from('pedido')
           .insert({
@@ -35,7 +34,6 @@ class PayService {
 
       final pedidoId = pedidoResult['id'].toString();
 
-      // ── 2. Insertar detalle del pedido ──────────────────────────────
       final pedidoDetalles = productos.map((producto) {
         final cantidad = producto['cantidad'] as int;
         final precioUnitario = (producto['precio_unitario'] as num).toDouble();
@@ -50,13 +48,11 @@ class PayService {
 
       await _db.from('pedido_detalle').insert(pedidoDetalles);
 
-      // ── 3. Descontar stock via RPC (saltea RLS) ─────────────────────
       for (final producto in productos) {
         final productoId = producto['producto_id'] as String;
         final cantidadVendida = producto['cantidad'] as int;
         final nombreProducto = producto['nombre'].toString();
 
-        // Obtener stock actual (para calcular notificaciones)
         final productoActual = await _db
             .from('producto')
             .select('stock')
@@ -66,9 +62,6 @@ class PayService {
         final stockActual = (productoActual['stock'] as int?) ?? 0;
         final stockNuevo = (stockActual - cantidadVendida).clamp(0, 99999);
 
-        // ✅ FIX PRINCIPAL: descontar stock via RPC con SECURITY DEFINER
-        //    Esto saltea el RLS y permite el update aunque el usuario
-        //    sea un cliente sin permisos de escritura en la tabla producto
         await _db.rpc(
           'descontar_stock',
           params: {'p_producto_id': productoId, 'p_cantidad': cantidadVendida},
@@ -78,7 +71,6 @@ class PayService {
           '✅ Stock descontado: $nombreProducto | $stockActual → $stockNuevo',
         );
 
-        // Notificar si el stock quedó bajo o agotado
         await _notificarStockSiNecesario(
           productoId: productoId,
           nombre: nombreProducto,
@@ -93,7 +85,6 @@ class PayService {
     }
   }
 
-  // ── Lógica de notificación ────────────────────────────────────────────
   static Future<void> _notificarStockSiNecesario({
     required String productoId,
     required String nombre,
@@ -101,7 +92,6 @@ class PayService {
     required int stockNuevo,
   }) async {
     try {
-      // Caso 1: se agotó ahora (antes tenía stock, ahora = 0)
       if (stockNuevo <= 0 && stockAnterior > 0) {
         await _db.from('notificaciones').insert({
           'tipo': 'agotado',
@@ -113,7 +103,6 @@ class PayService {
         return;
       }
 
-      // Caso 2: bajó a stock bajo (1-3 unidades) y antes estaba bien
       if (stockNuevo <= 3 && stockNuevo > 0 && stockAnterior > 3) {
         await _db.from('notificaciones').insert({
           'tipo': 'stock_bajo',
@@ -125,7 +114,6 @@ class PayService {
         return;
       }
 
-      // Caso 3: ya estaba en stock bajo y sigue bajando
       if (stockNuevo <= 3 && stockNuevo > 0 && stockAnterior <= 3) {
         await _db.from('notificaciones').insert({
           'tipo': 'stock_bajo',
@@ -136,12 +124,44 @@ class PayService {
         });
       }
     } catch (e) {
-      // No interrumpir el flujo de compra si falla la notificación
       print('⚠️ Error creando notificación de stock: $e');
     }
   }
 
-  // ── Vaciar carrito ────────────────────────────────────────────────────
+  // ← FIX: elimina solo los items pagados, no todo el carrito
+  static Future<void> eliminarItemsPagados(
+    String usuarioId,
+    List<String> productoIds,
+  ) async {
+    try {
+      final carritoRes = await _db
+          .from('carrito')
+          .select('id')
+          .eq('usuario_id', usuarioId)
+          .maybeSingle();
+
+      if (carritoRes == null) return;
+
+      final carritoId = carritoRes['id'].toString();
+
+      final items = await _db
+          .from('carrito_item')
+          .select('id, producto_id')
+          .eq('carrito_id', carritoId);
+
+      final idsAEliminar = (items as List)
+          .where((item) => productoIds.contains(item['producto_id'].toString()))
+          .map((item) => item['id'].toString())
+          .toList();
+
+      if (idsAEliminar.isEmpty) return;
+
+      await _db.from('carrito_item').delete().inFilter('id', idsAEliminar);
+    } catch (e) {
+      throw Exception('Error al eliminar items pagados: $e');
+    }
+  }
+
   static Future<void> vaciarCarrito(String usuarioId) async {
     try {
       final carritoRes = await _db

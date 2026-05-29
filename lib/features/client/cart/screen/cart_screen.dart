@@ -127,9 +127,11 @@ class _CartScreenState extends State<CartScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        titleSpacing: 0, // ← evita spacing extra
+        // ── TÍTULO CORREGIDO: sin overflow ──────────────────
         title: Row(
+          mainAxisSize: MainAxisSize.min, // ← clave para no desbordar
           children: [
-            // Checkbox seleccionar todos ANTES del ícono
             if (cart.items.isNotEmpty)
               Checkbox(
                 value: cart.allSelected,
@@ -141,29 +143,33 @@ class _CartScreenState extends State<CartScreen> {
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 visualDensity: VisualDensity.compact,
               ),
-            const Icon(Icons.shopping_bag_outlined, color: Color(0xFFFF69B4)),
+            const Icon(
+              Icons.shopping_bag_outlined,
+              color: Color(0xFFFF69B4),
+              size: 20,
+            ),
             const SizedBox(width: 4),
             const Text(
               'Mi Carrito',
               style: TextStyle(
                 color: Color(0xFFD81B60),
                 fontWeight: FontWeight.bold,
-                fontSize: 20,
+                fontSize: 18, // ← reducido para pantallas chicas
               ),
             ),
             if (cart.totalItems > 0) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF69B4).withOpacity(0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '${cart.totalItems} items',
+                  '${cart.totalItems}',
                   style: const TextStyle(
                     color: Color(0xFFFF69B4),
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -402,10 +408,11 @@ class _CartScreenState extends State<CartScreen> {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(10), // ← reducido
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Checkbox de selección
+                // Checkbox
                 Checkbox(
                   value: isSelected,
                   onChanged: (_) => cart.toggleItem(itemId),
@@ -416,15 +423,15 @@ class _CartScreenState extends State<CartScreen> {
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   visualDensity: VisualDensity.compact,
                 ),
-                const SizedBox(width: 4),
+                // Imagen
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                   child: Container(
-                    width: 70,
-                    height: 70,
+                    width: 60,
+                    height: 60,
                     decoration: BoxDecoration(
                       color: const Color(0xFFFF69B4).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: imagen != null && imagen.isNotEmpty
                         ? Image.network(
@@ -433,17 +440,18 @@ class _CartScreenState extends State<CartScreen> {
                             errorBuilder: (_, __, ___) => const Icon(
                               Icons.spa,
                               color: Color(0xFFFF69B4),
-                              size: 30,
+                              size: 28,
                             ),
                           )
                         : const Icon(
                             Icons.spa,
                             color: Color(0xFFFF69B4),
-                            size: 30,
+                            size: 28,
                           ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
+                // Info producto — Expanded para no desbordar
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -452,23 +460,25 @@ class _CartScreenState extends State<CartScreen> {
                         nombre,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 13,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
                         'Bs. ${precio.toStringAsFixed(2)} c/u',
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: Colors.black45,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
+                      // Controles cantidad + subtotal en fila
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+                          // Botones cantidad
                           Container(
                             decoration: BoxDecoration(
                               color: const Color(0xFFFFF0F5),
@@ -478,19 +488,18 @@ class _CartScreenState extends State<CartScreen> {
                               ),
                             ),
                             child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 _qtyBtn(
                                   icon: Icons.remove,
                                   disabled: cantidad <= 1,
                                   onTap: () async {
-                                    final cartProvider = context
-                                        .read<CartProvider>();
-                                    final success = await cartProvider
-                                        .decrementar(itemId);
-                                    if (!success &&
-                                        cartProvider.errorMessage != null &&
+                                    final cp = context.read<CartProvider>();
+                                    final ok = await cp.decrementar(itemId);
+                                    if (!ok &&
+                                        cp.errorMessage != null &&
                                         mounted) {
-                                      _showError(cartProvider.errorMessage!);
+                                      _showError(cp.errorMessage!);
                                     }
                                   },
                                 ),
@@ -498,15 +507,13 @@ class _CartScreenState extends State<CartScreen> {
                                   cantidad: cantidad,
                                   stock: stock,
                                   processing: false,
-                                  onChanged: (nuevaCantidad) async {
-                                    final cartProvider = context
-                                        .read<CartProvider>();
-                                    final success = await cartProvider
-                                        .actualizar(itemId, nuevaCantidad);
-                                    if (!success &&
-                                        cartProvider.errorMessage != null &&
+                                  onChanged: (n) async {
+                                    final cp = context.read<CartProvider>();
+                                    final ok = await cp.actualizar(itemId, n);
+                                    if (!ok &&
+                                        cp.errorMessage != null &&
                                         mounted) {
-                                      _showError(cartProvider.errorMessage!);
+                                      _showError(cp.errorMessage!);
                                     }
                                   },
                                 ),
@@ -514,27 +521,26 @@ class _CartScreenState extends State<CartScreen> {
                                   icon: Icons.add,
                                   disabled: cantidad >= stock,
                                   onTap: () async {
-                                    final cartProvider = context
-                                        .read<CartProvider>();
-                                    final success = await cartProvider
-                                        .incrementar(itemId);
-                                    if (!success &&
-                                        cartProvider.errorMessage != null &&
+                                    final cp = context.read<CartProvider>();
+                                    final ok = await cp.incrementar(itemId);
+                                    if (!ok &&
+                                        cp.errorMessage != null &&
                                         mounted) {
-                                      _showError(cartProvider.errorMessage!);
+                                      _showError(cp.errorMessage!);
                                     }
                                   },
                                 ),
                               ],
                             ),
                           ),
+                          // Subtotal
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               const Text(
                                 'Subtotal',
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 10,
                                   color: Colors.black38,
                                 ),
                               ),
@@ -543,7 +549,7 @@ class _CartScreenState extends State<CartScreen> {
                                 style: const TextStyle(
                                   color: Color(0xFFD81B60),
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 15,
+                                  fontSize: 13,
                                 ),
                               ),
                             ],
@@ -556,7 +562,7 @@ class _CartScreenState extends State<CartScreen> {
                           child: Text(
                             '¡Solo quedan $stock en stock!',
                             style: const TextStyle(
-                              fontSize: 11,
+                              fontSize: 10,
                               color: Colors.orange,
                               fontWeight: FontWeight.w500,
                             ),
@@ -565,14 +571,16 @@ class _CartScreenState extends State<CartScreen> {
                     ],
                   ),
                 ),
-                // Botón eliminar con ícono de basurero
+                // Botón eliminar
                 IconButton(
                   onPressed: () => _confirmDelete(itemId, nombre),
                   icon: const Icon(
                     Icons.delete_outline,
                     color: Colors.red,
-                    size: 20,
+                    size: 18,
                   ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                 ),
               ],
             ),
@@ -590,8 +598,8 @@ class _CartScreenState extends State<CartScreen> {
     return GestureDetector(
       onTap: disabled ? null : onTap,
       child: Container(
-        width: 30,
-        height: 30,
+        width: 28,
+        height: 28,
         decoration: BoxDecoration(
           color: disabled
               ? Colors.grey[200]
@@ -600,7 +608,7 @@ class _CartScreenState extends State<CartScreen> {
         ),
         child: Icon(
           icon,
-          size: 16,
+          size: 14,
           color: disabled ? Colors.grey : const Color(0xFFD81B60),
         ),
       ),
@@ -608,7 +616,7 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _resumenTotal(CartProvider cart) => Container(
-    padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -631,54 +639,48 @@ class _CartScreenState extends State<CartScreen> {
             borderRadius: BorderRadius.circular(2),
           ),
         ),
-        const SizedBox(height: 16),
-
-        // Subtotal
+        const SizedBox(height: 14),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               cart.hasSelection ? 'Subtotal (seleccionado):' : 'Subtotal:',
-              style: const TextStyle(fontSize: 15, color: Colors.black54),
+              style: const TextStyle(fontSize: 14, color: Colors.black54),
             ),
             Text(
               'Bs. ${cart.hasSelection ? cart.selectedSubtotal.toStringAsFixed(2) : "0.00"}',
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
           ],
         ),
         const SizedBox(height: 6),
-
-        // Envío
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
               'Envío:',
-              style: TextStyle(fontSize: 15, color: Colors.black54),
+              style: TextStyle(fontSize: 14, color: Colors.black54),
             ),
             Text(
               cart.hasSelection ? 'A calcular' : '—',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 color: cart.hasSelection ? Colors.orange : Colors.grey,
               ),
             ),
           ],
         ),
         const Padding(
-          padding: EdgeInsets.symmetric(vertical: 12),
+          padding: EdgeInsets.symmetric(vertical: 10),
           child: Divider(color: Color(0xFFFFE4E9)),
         ),
-
-        // Total
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
               'Total:',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 17,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFFD81B60),
               ),
@@ -686,19 +688,17 @@ class _CartScreenState extends State<CartScreen> {
             Text(
               'Bs. ${cart.hasSelection ? cart.selectedSubtotal.toStringAsFixed(2) : "0.00"}',
               style: const TextStyle(
-                fontSize: 20,
+                fontSize: 19,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFFD81B60),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
-
-        // Botón SOLO activo si hay selección
+        const SizedBox(height: 14),
         SizedBox(
           width: double.infinity,
-          height: 54,
+          height: 52,
           child: ElevatedButton.icon(
             onPressed: cart.hasSelection
                 ? () {
@@ -710,13 +710,17 @@ class _CartScreenState extends State<CartScreen> {
                     );
                   }
                 : null,
-            icon: const Icon(Icons.payment_rounded, color: Colors.white),
+            icon: const Icon(
+              Icons.payment_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
             label: Text(
               cart.hasSelection
                   ? 'Proceder al pago (${cart.selectedCount})'
                   : 'Selecciona productos',
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
@@ -766,9 +770,7 @@ class _EditableQuantityState extends State<_EditableQuantity> {
     _controller = TextEditingController(text: '${widget.cantidad}');
     _focusNode = FocusNode();
     _focusNode.addListener(() {
-      if (!_focusNode.hasFocus && _editing) {
-        _confirmEdit();
-      }
+      if (!_focusNode.hasFocus && _editing) _confirmEdit();
     });
   }
 
@@ -806,9 +808,7 @@ class _EditableQuantityState extends State<_EditableQuantity> {
       _controller.text = '${widget.cantidad}';
     } else if (parsed > widget.stock) {
       _controller.text = '${widget.stock}';
-      if (parsed != widget.cantidad) {
-        widget.onChanged(widget.stock);
-      }
+      if (parsed != widget.cantidad) widget.onChanged(widget.stock);
     } else if (parsed != widget.cantidad) {
       widget.onChanged(parsed);
     }
@@ -819,7 +819,7 @@ class _EditableQuantityState extends State<_EditableQuantity> {
   Widget build(BuildContext context) {
     if (_editing) {
       return SizedBox(
-        width: 50,
+        width: 44,
         child: TextField(
           controller: _controller,
           focusNode: _focusNode,
@@ -827,7 +827,7 @@ class _EditableQuantityState extends State<_EditableQuantity> {
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 15,
+            fontSize: 14,
             color: Color(0xFFD81B60),
           ),
           decoration: const InputDecoration(
@@ -843,7 +843,7 @@ class _EditableQuantityState extends State<_EditableQuantity> {
     return GestureDetector(
       onTap: _startEdit,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
@@ -854,7 +854,7 @@ class _EditableQuantityState extends State<_EditableQuantity> {
         ),
         child: Text(
           '${widget.cantidad}',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
       ),
     );

@@ -41,7 +41,6 @@ class _PayScreenState extends State<PayScreen> {
     final cart = context.read<CartProvider>();
     final payProvider = context.read<PayProvider>();
 
-    // Usar solo seleccionados si hay, sino todos
     final itemsAPagar = cart.hasSelection ? cart.selectedItems : cart.items;
 
     if (itemsAPagar.isEmpty) {
@@ -146,7 +145,10 @@ class _PayScreenState extends State<PayScreen> {
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
     final payProvider = context.watch<PayProvider>();
-    final total = cart.subtotal + _costoEnvio;
+
+    // ✅ FIX: usar selectedSubtotal si hay selección
+    final subtotal = cart.hasSelection ? cart.selectedSubtotal : cart.subtotal;
+    final total = subtotal + _costoEnvio;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFF0F5),
@@ -179,7 +181,7 @@ class _PayScreenState extends State<PayScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  _resumenPedido(cart, total),
+                  _resumenPedido(cart, subtotal, total),
                   const SizedBox(height: 20),
                   _formularioPago(),
                   const SizedBox(height: 20),
@@ -190,7 +192,7 @@ class _PayScreenState extends State<PayScreen> {
     );
   }
 
-  Widget _resumenPedido(CartProvider cart, double total) {
+  Widget _resumenPedido(CartProvider cart, double subtotal, double total) {
     final itemsMostrar = cart.hasSelection ? cart.selectedItems : cart.items;
 
     return Container(
@@ -237,7 +239,7 @@ class _PayScreenState extends State<PayScreen> {
               final nombre = producto['nombre']?.toString() ?? 'Producto';
               final cantidad = (item['cantidad'] as int?) ?? 1;
               final precio = (item['precio_unitario'] as num?)?.toDouble() ?? 0;
-              final subtotal = cantidad * precio;
+              final subtotalItem = cantidad * precio;
               final imagenUrl = producto['imagen_url']?.toString();
 
               return Padding(
@@ -273,6 +275,8 @@ class _PayScreenState extends State<PayScreen> {
                           Text(
                             nombre,
                             style: const TextStyle(fontWeight: FontWeight.w500),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             'Bs. $precio c/u',
@@ -296,7 +300,7 @@ class _PayScreenState extends State<PayScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Bs. ${subtotal.toStringAsFixed(2)}',
+                          'Bs. ${subtotalItem.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Color(0xFFD81B60),
@@ -314,15 +318,17 @@ class _PayScreenState extends State<PayScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                _filaTotal(
-                  'Subtotal',
-                  'Bs. ${cart.subtotal.toStringAsFixed(2)}',
-                ),
+                // ✅ FIX: subtotal correcto
+                _filaTotal('Subtotal', 'Bs. ${subtotal.toStringAsFixed(2)}'),
                 const SizedBox(height: 8),
-                _filaTotal('Envío', _costoEnvio > 0 ? 'Bs. $_costoEnvio' : 'Gratis'),
+                _filaTotal(
+                  'Envío',
+                  _costoEnvio > 0 ? 'Bs. $_costoEnvio' : 'Gratis',
+                ),
                 const SizedBox(height: 12),
                 const Divider(color: Color(0xFFFFE4E9)),
                 const SizedBox(height: 12),
+                // ✅ FIX: total correcto
                 _filaTotal(
                   'Total',
                   'Bs. ${total.toStringAsFixed(2)}',
@@ -548,14 +554,18 @@ class _PayScreenState extends State<PayScreen> {
                   ? const Color(0xFFFF69B4)
                   : Colors.grey,
             ),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: _metodoPago == valor
-                    ? FontWeight.w500
-                    : FontWeight.normal,
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: _metodoPago == valor
+                      ? FontWeight.w500
+                      : FontWeight.normal,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
               ),
             ),
           ],
