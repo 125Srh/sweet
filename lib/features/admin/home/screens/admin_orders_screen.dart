@@ -40,6 +40,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         return Colors.purple;
       case 'recibido':
         return Colors.pink;
+      case 'cancelado':
+        return Colors.red;
       default:
         return Colors.black;
     }
@@ -57,6 +59,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         return Icons.local_shipping;
       case 'recibido':
         return Icons.done_all;
+      case 'cancelado':
+        return Icons.cancel;
       default:
         return Icons.help;
     }
@@ -74,6 +78,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         return 'Enviado';
       case 'recibido':
         return 'Recibido';
+      case 'cancelado':
+        return 'Cancelado';
       default:
         return estado;
     }
@@ -85,6 +91,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
     'listo',
     'enviado',
     'recibido',
+    'cancelado',
   ];
 
   @override
@@ -122,7 +129,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
               itemBuilder: (context, index) {
                 final pedido = pedidos[index];
                 final estado = pedido['estado'];
-                final esPedidoRecibido = estado == 'recibido';
+                final esFinalizado =
+                    estado == 'recibido' || estado == 'cancelado';
                 final cliente = pedido['usuario'] != null
                     ? "${pedido['usuario']['nombre']} ${pedido['usuario']['apellido']}"
                     : "Cliente desconocido";
@@ -262,7 +270,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                             const SizedBox(width: 10),
                             Flexible(
                               flex: 1,
-                              child: esPedidoRecibido
+                              child: esFinalizado
                                   ? Container(
                                       height: 42,
                                       alignment: Alignment.center,
@@ -273,20 +281,28 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                           color: Colors.pink.shade100,
                                         ),
                                       ),
-                                      child: const Row(
+                                      child: Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
                                           Icon(
-                                            Icons.stars_rounded,
-                                            color: Colors.pink,
+                                            estado == 'cancelado'
+                                                ? Icons.cancel
+                                                : Icons.stars_rounded,
+                                            color: estado == 'cancelado'
+                                                ? Colors.red
+                                                : Colors.pink,
                                             size: 18,
                                           ),
-                                          SizedBox(width: 6),
+                                          const SizedBox(width: 6),
                                           Text(
-                                            "Completado",
+                                            estado == 'cancelado'
+                                                ? "Cancelado"
+                                                : "Completado",
                                             style: TextStyle(
-                                              color: Colors.pink,
+                                              color: estado == 'cancelado'
+                                                  ? Colors.red
+                                                  : Colors.pink,
                                               fontWeight: FontWeight.bold,
                                               fontSize: 13,
                                             ),

@@ -4,16 +4,16 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sweet/features/client/home/screen/client_detail_screen.dart';
 import 'package:sweet/main.dart';
-import '../WIDGET/client_category_item.dart';
+import '../widget/client_category_item.dart';
 import 'package:provider/provider.dart';
 import '../provider/client_provider.dart';
 import 'package:sweet/features/client/cart/provider/cart_provider.dart';
 import 'package:sweet/features/client/cart/screen/cart_screen.dart';
-import 'package:sweet/features/client/cart/WIDGET/add_to_cart_button.dart';
+import 'package:sweet/features/client/cart/widget/add_to_cart_button.dart';
 import 'package:sweet/features/client/favorites/screen/favorites_screen.dart';
-import 'package:sweet/features/client/home/WIDGET/search_screen.dart';
+import 'package:sweet/features/client/home/widget/search_screen.dart';
 import 'package:sweet/features/client/home/screen/client_orders_screen.dart';
-import 'package:sweet/features/client/home/WIDGET/notification_bell.dart'; // ✅ IMPORT CORREGIDO
+import 'package:sweet/features/client/home/widget/notification_bell.dart'; // ✅ IMPORT CORREGIDO
 
 import 'package:sweet/main.dart';
 
@@ -69,11 +69,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     } catch (e) {
       debugPrint('Error al obtener datos de usuario: $e');
     }
-    return {
-      'nombre': 'Usuario',
-      'email': user.email ?? '',
-      'rol': 'Cliente',
-    };
+    return {'nombre': 'Usuario', 'email': user.email ?? '', 'rol': 'Cliente'};
   }
 
   void _mostrarPerfilDialog(BuildContext context) {
@@ -93,9 +89,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 return const SizedBox(
                   height: 200,
                   child: Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFFFF69B4),
-                    ),
+                    child: CircularProgressIndicator(color: Color(0xFFFF69B4)),
                   ),
                 );
               }
