@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../service/order_service.dart';
-import '../../orders/services/invoice_service.dart'; // ← IMPORTANTE
+import '../../orders/services/invoice_service.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final Map<String, dynamic> pedido;
@@ -13,10 +14,10 @@ class OrderDetailScreen extends StatefulWidget {
 
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
   final OrderService _service = OrderService();
-  final InvoiceService _invoiceService = InvoiceService(); // ← NUEVO
+  final InvoiceService _invoiceService = InvoiceService();
   List<Map<String, dynamic>> _detalles = [];
   bool _loading = true;
-  bool _isPrinting = false; // ← NUEVO
+  bool _isPrinting = false;
 
   final Color rosaPrincipal = const Color(0xFFFF69B4);
   final Color rosaSuave = const Color(0xFFFFF0F5);
@@ -41,11 +42,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
-  // 🖨️ NUEVO: Imprimir factura
   Future<void> _printInvoice() async {
     setState(() => _isPrinting = true);
 
-    // Preparar productos para la factura
     final products = _detalles.map((item) {
       return {
         'name': item['producto']?['nombre']?.toString() ?? 'Producto',
@@ -67,13 +66,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       }
     }
 
+    // ← CAMBIO: email y nombre del usuario logueado via Supabase
+    final user = Supabase.instance.client.auth.currentUser;
+    final customerEmail = user?.email ?? '—';
+    final customerName =
+        user?.userMetadata?['full_name']?.toString() ??
+        user?.userMetadata?['name']?.toString() ??
+        'Cliente Sweet';
+
     await _invoiceService.printInvoice(
       orderId: widget.pedido['id']?.toString() ?? '',
       date: fechaFormato,
-      customerName:
-          'Cliente Sweet', // Puedes obtener el nombre del usuario logueado
-      customerEmail:
-          'cliente@sweet.com', // Puedes obtener el email del usuario logueado
+      customerName: customerName,
+      customerEmail: customerEmail,
       address: widget.pedido['direccion_entrega']?.toString() ?? '—',
       paymentMethod:
           widget.pedido['metodo_pago']?.toString() == 'tarjeta_simulada'
@@ -88,7 +93,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     if (mounted) setState(() => _isPrinting = false);
   }
 
-  // ── Helpers de estado ────────────────────────────────────
   String _estadoLabel(String estado) {
     switch (estado) {
       case 'pendiente':
@@ -151,7 +155,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final fechaPedido = widget.pedido['fecha_pedido']?.toString();
     final notas = widget.pedido['notas']?.toString();
 
-    // Formatear fecha
     String fechaFormato = '—';
     if (fechaPedido != null) {
       final dt = DateTime.tryParse(fechaPedido);
@@ -179,7 +182,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        // 🖨️ BOTÓN DE IMPRIMIR
         actions: [
           IconButton(
             icon: _isPrinting
@@ -204,7 +206,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Estado del pedido ──────────────────────
                   _seccion(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -250,7 +251,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // ── Info del pedido ────────────────────────
                   _seccion(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,7 +285,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // ── Productos del pedido ───────────────────
                   const Text(
                     'Productos',
                     style: TextStyle(
@@ -358,7 +357,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                 padding: const EdgeInsets.all(12),
                                 child: Row(
                                   children: [
-                                    // Imagen
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(10),
                                       child: Container(
@@ -386,8 +384,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                       ),
                                     ),
                                     const SizedBox(width: 12),
-
-                                    // Info producto
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
@@ -413,8 +409,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                         ],
                                       ),
                                     ),
-
-                                    // Cantidad y subtotal
                                     Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.end,
@@ -461,7 +455,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
                   const SizedBox(height: 16),
 
-                  // ── Resumen de totales ─────────────────────
                   _seccion(
                     child: Column(
                       children: [
@@ -510,7 +503,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
-  // ── Widgets auxiliares ──────────────────────────────────
   Widget _seccion({required Widget child}) => Container(
     width: double.infinity,
     padding: const EdgeInsets.all(14),
