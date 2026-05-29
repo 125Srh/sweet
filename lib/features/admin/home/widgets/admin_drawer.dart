@@ -2,14 +2,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../screens/admin_clients_screen.dart'; // ← HU-19
-import '../screens/admin_notifications_screen.dart'; // ← HU-22
+import '../screens/admin_clients_screen.dart';
+import '../screens/admin_notifications_screen.dart';
 import '../screens/admin_orders_screen.dart';
 
 class AdminDrawer extends StatelessWidget {
   final int selectedIndex;
 
-  const AdminDrawer({super.key, this.selectedIndex = 1});
+  const AdminDrawer({super.key, this.selectedIndex = 0});
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +42,7 @@ class AdminDrawer extends StatelessWidget {
     return Drawer(
       child: Column(
         children: [
-          // ── Header — igual que el original ──────────────
+          // ── Header ──────────────────────────────────────
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 40),
@@ -56,7 +56,7 @@ class AdminDrawer extends StatelessWidget {
                 ),
                 SizedBox(height: 10),
                 Text(
-                  'MiTienda',
+                  'Sweet',
                   style: TextStyle(color: Colors.white, fontSize: 20),
                 ),
                 Text(
@@ -67,30 +67,22 @@ class AdminDrawer extends StatelessWidget {
             ),
           ),
 
+          // índice 0
           item(
-            Icons.dashboard_outlined,
-            'Inicio',
+            Icons.inventory_2,
+            'Productos',
             selected: selectedIndex == 0,
             onTap: () {
               Navigator.pop(context);
               context.go('/admin');
             },
           ),
-          item(
-            Icons.inventory_2,
-            'Productos',
-            selected: selectedIndex == 1,
-            onTap: () {
-              Navigator.pop(context);
-              context.go('/admin');
-            },
-          ),
 
-          // ← HU-19: navega a la pantalla de clientes
+          // índice 1
           item(
             Icons.people_outline,
             'Clientes',
-            selected: selectedIndex == 2,
+            selected: selectedIndex == 1,
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -100,11 +92,11 @@ class AdminDrawer extends StatelessWidget {
             },
           ),
 
-          // ← HU-22: navega a notificaciones de ventas
+          // índice 2
           item(
             Icons.notifications_outlined,
             'Notificaciones de ventas',
-            selected: selectedIndex == 3,
+            selected: selectedIndex == 2,
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -116,25 +108,22 @@ class AdminDrawer extends StatelessWidget {
             },
           ),
 
-          item(
-            Icons.shopping_cart_outlined,
-            'Ventas',
-            selected: selectedIndex == 4,
-            onTap: () => Navigator.pop(context),
-          ),
+          // índice 3
           item(
             Icons.bar_chart_outlined,
             'Reportes',
-            selected: selectedIndex == 5,
+            selected: selectedIndex == 3,
             onTap: () {
               Navigator.pop(context);
               context.go('/reportes');
             },
           ),
+
+          // índice 4
           item(
             Icons.shopping_bag_outlined,
             'Gestionar Pedidos',
-            selected: selectedIndex == 6,
+            selected: selectedIndex == 4,
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -146,7 +135,7 @@ class AdminDrawer extends StatelessWidget {
 
           const Spacer(),
           const Divider(),
-          item(Icons.settings, 'Configuración'),
+
           item(
             Icons.logout,
             'Cerrar Sesión',
@@ -176,22 +165,11 @@ class AdminDrawer extends StatelessWidget {
               );
 
               if (confirmar == true) {
-                // 🌟 1. CERRAR EL DRAWER PRIMERO: Sacamos el Drawer de la pantalla
-                // usando el contexto original para que no intente redibujarse sin sesión.
                 Navigator.pop(context);
-
-                // 🌟 2. ESPERAR UN MILISEGUNDO DE SEGURIDAD: Damos tiempo a la animación
-                // de cierre del drawer para evitar cualquier bache gráfico.
                 await Future.delayed(const Duration(milliseconds: 100));
-
                 try {
-                  // 3. Ejecutamos el cierre de sesión en Supabase
                   await Supabase.instance.client.auth.signOut();
-
-                  // 4. Verificación de montaje con soporte para BuildContext en Stateless
                   if (!context.mounted) return;
-
-                  // 5. Redirección limpia al Login
                   context.go('/login');
                 } catch (e) {
                   debugPrint("❌ [DRAWER ERROR] Falló al hacer signOut: $e");

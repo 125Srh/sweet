@@ -1,7 +1,8 @@
 // lib/features/admin/home/screens/admin_notifications_screen.dart
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // ← FALTABA ESTE
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../service/admin_service.dart';
+import '../widgets/admin_drawer.dart'; // ← agregado
 
 class AdminNotificationsScreen extends StatefulWidget {
   const AdminNotificationsScreen({super.key});
@@ -56,18 +57,15 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
       final mensaje = notificacion['mensaje']?.toString() ?? '';
       final fechaNotif = notificacion['creada_en']?.toString();
 
-      // 1️⃣ Extraer monto: "...por Bs. 150.00"
       final regexMonto = RegExp(r'por Bs\.\s*([\d]+(?:[.,]\d+)?)');
       final match = regexMonto.firstMatch(mensaje);
       final montoStr = match?.group(1)?.replaceAll(',', '.');
       final monto = montoStr != null ? double.tryParse(montoStr) : null;
 
-      // 2️⃣ Extraer nombre: "María realizó un pedido..."
       final regexNombre = RegExp(r'^(.+?)\s+realizó');
       final matchNombre = regexNombre.firstMatch(mensaje);
       final nombreEnMensaje = matchNombre?.group(1);
 
-      // 3️⃣ Traer pedidos recientes
       final pedidos = await Supabase.instance.client
           .from('pedido')
           .select(
@@ -79,30 +77,25 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
       Map<String, dynamic>? pedidoEncontrado;
       final dtNotif = fechaNotif != null ? DateTime.tryParse(fechaNotif) : null;
 
-      // Buscar por monto + tiempo
       for (final pedido in pedidos) {
         final dtPedido = DateTime.tryParse(
           pedido['fecha_pedido']?.toString() ?? '',
         );
         final totalPedido = double.tryParse(pedido['total']?.toString() ?? '');
-
         final coincideMonto =
             monto != null &&
             totalPedido != null &&
             (monto - totalPedido).abs() < 0.5;
-
         final coincideTiempo =
             dtNotif != null &&
             dtPedido != null &&
             dtNotif.difference(dtPedido).abs().inMinutes <= 10;
-
         if (coincideMonto && coincideTiempo) {
           pedidoEncontrado = pedido;
           break;
         }
       }
 
-      // Fallback 1: solo por tiempo ±5 min
       if (pedidoEncontrado == null && dtNotif != null) {
         for (final pedido in pedidos) {
           final dtPedido = DateTime.tryParse(
@@ -116,21 +109,16 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
         }
       }
 
-      // Fallback 2: el más reciente
-      if (pedidoEncontrado == null && pedidos.isNotEmpty) {
+      if (pedidoEncontrado == null && pedidos.isNotEmpty)
         pedidoEncontrado = pedidos.first;
-      }
 
-      // 4️⃣ Cargar detalle
       if (pedidoEncontrado != null) {
         final pid = pedidoEncontrado['id'].toString();
         detalles = await _service.getDetallePedido(pid);
-
         final usuario = pedidoEncontrado['usuario'];
         final nombreReal = usuario != null
             ? '${usuario['nombre']} ${usuario['apellido']}'.trim()
             : (nombreEnMensaje ?? 'Cliente');
-
         pedidoInfo = 'Pedido de $nombreReal — Bs. ${pedidoEncontrado['total']}';
       }
     } catch (e) {
@@ -165,7 +153,6 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
@@ -191,7 +178,6 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-
               detalles.isEmpty
                   ? const Padding(
                       padding: EdgeInsets.symmetric(vertical: 20),
@@ -264,7 +250,6 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                         },
                       ),
                     ),
-
               const SizedBox(height: 10),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -290,12 +275,16 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF0F5),
+      drawer: const AdminDrawer(selectedIndex: 3), // ← drawer agregado
       appBar: AppBar(
         backgroundColor: _pink,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+        // ← hamburguesa en lugar de flecha
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+          ),
         ),
         title: Row(
           children: [
@@ -449,7 +438,6 @@ class _VentaTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -529,7 +517,6 @@ class _VentaTile extends StatelessWidget {
                     ],
                   ),
                 ),
-
                 IconButton(
                   onPressed: onEliminar,
                   icon: Icon(Icons.close, size: 18, color: Colors.grey[400]),

@@ -1,6 +1,7 @@
 // lib/features/admin/home/screens/admin_clients_screen.dart
 import 'package:flutter/material.dart';
 import '../service/admin_service.dart';
+import '../widgets/admin_drawer.dart'; // ← importar el drawer
 
 class AdminClientsScreen extends StatefulWidget {
   const AdminClientsScreen({super.key});
@@ -43,7 +44,8 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
     final q = texto.toLowerCase();
     setState(() {
       _filtrados = _clientes.where((c) {
-        final nombre = '${c['nombre'] ?? ''} ${c['apellido'] ?? ''}'.toLowerCase();
+        final nombre = '${c['nombre'] ?? ''} ${c['apellido'] ?? ''}'
+            .toLowerCase();
         final correo = (c['email'] ?? '').toString().toLowerCase();
         return nombre.contains(q) || correo.contains(q);
       }).toList();
@@ -61,9 +63,9 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
 
   Widget _buildFiltros() {
     final filtros = [
-      {'valor': 'todos',       'label': 'Todos',       'color': Colors.grey},
-      {'valor': 'activo',      'label': 'Activos',     'color': Colors.green},
-      {'valor': 'inactivo',    'label': 'Inactivos',   'color': Colors.orange},
+      {'valor': 'todos', 'label': 'Todos', 'color': Colors.grey},
+      {'valor': 'activo', 'label': 'Activos', 'color': Colors.green},
+      {'valor': 'inactivo', 'label': 'Inactivos', 'color': Colors.orange},
       {'valor': 'sin_compras', 'label': 'Sin compras', 'color': Colors.red},
     ];
 
@@ -81,7 +83,10 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 margin: const EdgeInsets.only(right: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 7,
+                ),
                 decoration: BoxDecoration(
                   color: seleccionado ? color : color.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(20),
@@ -109,17 +114,25 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF0F5),
+      // ← Drawer agregado aquí
+      drawer: const AdminDrawer(selectedIndex: 2),
       appBar: AppBar(
         backgroundColor: _pink,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+        // ← Hamburguesa en lugar de flecha
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+          ),
         ),
         title: const Text(
           'Clientes registrados',
           style: TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         actions: [
           if (_clientes.isNotEmpty)
@@ -133,9 +146,10 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
               child: Text(
                 '${_clientes.length} clientes',
                 style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600),
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
         ],
@@ -180,11 +194,8 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
                 ? const Center(child: CircularProgressIndicator(color: _pink))
                 : Column(
                     children: [
-                      // ── Chips de filtro ────────────────
                       _buildFiltros(),
                       const Divider(height: 1),
-
-                      // ── Lista ─────────────────────────
                       Expanded(
                         child: _filtrados.isEmpty
                             ? _emptyState()
@@ -201,11 +212,15 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
                                         cliente['created_at'] ?? '',
                                       ),
                                       builder: (context, snap) {
-                                        if (!snap.hasData) return const SizedBox();
-                                        if (snap.data != _filtroEstado) return const SizedBox();
+                                        if (!snap.hasData)
+                                          return const SizedBox();
+                                        if (snap.data != _filtroEstado)
+                                          return const SizedBox();
                                         return _ClienteTile(
                                           cliente: cliente,
-                                          fecha: _formatearFecha(cliente['created_at']),
+                                          fecha: _formatearFecha(
+                                            cliente['created_at'],
+                                          ),
                                         );
                                       },
                                     );
@@ -213,7 +228,9 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
 
                                   return _ClienteTile(
                                     cliente: cliente,
-                                    fecha: _formatearFecha(cliente['created_at']),
+                                    fecha: _formatearFecha(
+                                      cliente['created_at'],
+                                    ),
                                   );
                                 },
                               ),
@@ -238,9 +255,10 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
                 ? 'No se encontraron clientes'
                 : 'No hay clientes registrados',
             style: const TextStyle(
-                fontSize: 16,
-                color: Colors.black45,
-                fontWeight: FontWeight.w500),
+              fontSize: 16,
+              color: Colors.black45,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -287,26 +305,36 @@ class _ClienteTileState extends State<_ClienteTile> {
 
   Color get _badgeColor {
     switch (_estado) {
-      case 'activo':      return Colors.green;
-      case 'inactivo':    return Colors.orange;
-      case 'sin_compras': return Colors.red;
-      default:            return Colors.grey;
+      case 'activo':
+        return Colors.green;
+      case 'inactivo':
+        return Colors.orange;
+      case 'sin_compras':
+        return Colors.red;
+      default:
+        return Colors.grey;
     }
   }
 
   String get _badgeLabel {
     switch (_estado) {
-      case 'activo':      return 'Activo';
-      case 'inactivo':    return 'Inactivo';
-      case 'sin_compras': return 'Sin compras';
-      default:            return '...';
+      case 'activo':
+        return 'Activo';
+      case 'inactivo':
+        return 'Inactivo';
+      case 'sin_compras':
+        return 'Sin compras';
+      default:
+        return '...';
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final nombre   = '${widget.cliente['nombre'] ?? ''} ${widget.cliente['apellido'] ?? ''}'.trim();
-    final correo   = widget.cliente['email']?.toString() ?? '—';
+    final nombre =
+        '${widget.cliente['nombre'] ?? ''} ${widget.cliente['apellido'] ?? ''}'
+            .trim();
+    final correo = widget.cliente['email']?.toString() ?? '—';
     final telefono = widget.cliente['telefono']?.toString() ?? '—';
 
     return Container(
@@ -326,7 +354,6 @@ class _ClienteTileState extends State<_ClienteTile> {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            // Avatar con inicial
             Container(
               width: 50,
               height: 50,
@@ -334,7 +361,8 @@ class _ClienteTileState extends State<_ClienteTile> {
                 color: const Color(0xFFFF69B4).withOpacity(0.15),
                 shape: BoxShape.circle,
                 border: Border.all(
-                    color: const Color(0xFFFF69B4).withOpacity(0.4)),
+                  color: const Color(0xFFFF69B4).withOpacity(0.4),
+                ),
               ),
               child: Center(
                 child: Text(
@@ -348,8 +376,6 @@ class _ClienteTileState extends State<_ClienteTile> {
               ),
             ),
             const SizedBox(width: 14),
-
-            // Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -360,14 +386,17 @@ class _ClienteTileState extends State<_ClienteTile> {
                         child: Text(
                           nombre.isNotEmpty ? nombre : 'Sin nombre',
                           style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 15),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      // Badge de estado
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: _badgeColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
@@ -385,30 +414,52 @@ class _ClienteTileState extends State<_ClienteTile> {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Row(children: [
-                    const Icon(Icons.email_outlined,
-                        size: 13, color: Colors.black38),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(correo,
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.email_outlined,
+                        size: 13,
+                        color: Colors.black38,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          correo,
                           style: const TextStyle(
-                              fontSize: 13, color: Colors.black54),
-                          overflow: TextOverflow.ellipsis),
-                    ),
-                  ]),
+                            fontSize: 13,
+                            color: Colors.black54,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 2),
-                  Row(children: [
-                    const Icon(Icons.phone_outlined,
-                        size: 13, color: Colors.black38),
-                    const SizedBox(width: 4),
-                    Text(telefono,
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.phone_outlined,
+                        size: 13,
+                        color: Colors.black38,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        telefono,
                         style: const TextStyle(
-                            fontSize: 13, color: Colors.black54)),
-                    const Spacer(),
-                    Text('Desde ${widget.fecha}',
+                          fontSize: 13,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        'Desde ${widget.fecha}',
                         style: const TextStyle(
-                            fontSize: 11, color: Colors.black38)),
-                  ]),
+                          fontSize: 11,
+                          color: Colors.black38,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),

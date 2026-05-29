@@ -1,5 +1,7 @@
+// lib/features/admin/home/screens/admin_orders_screen.dart
 import 'package:flutter/material.dart';
 import '../service/admin_service.dart';
+import '../widgets/admin_drawer.dart'; // ← agregado
 
 class AdminOrdersScreen extends StatefulWidget {
   const AdminOrdersScreen({super.key});
@@ -23,9 +25,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
 
   Future<void> cargarPedidos() async {
     final res = await service.getPedidos();
-    setState(() {
-      pedidos = res;
-    });
+    setState(() => pedidos = res);
   }
 
   Color getColor(String estado) {
@@ -39,7 +39,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
       case 'enviado':
         return Colors.purple;
       case 'recibido':
-        return Colors.pink; // 🌸 Rosa Sweet para el final exitoso
+        return Colors.pink;
       default:
         return Colors.black;
     }
@@ -90,6 +90,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AdminDrawer(selectedIndex: 5), // ← drawer agregado
       appBar: AppBar(
         title: const Text(
           'Gestión de pedidos',
@@ -97,11 +98,18 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         ),
         backgroundColor: primaryPink,
         centerTitle: true,
+        // ← hamburguesa en lugar de flecha
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+          ),
+        ),
       ),
       body: pedidos.isEmpty
           ? Center(
               child: Text(
-                "No hay pedidos registrados",
+                'No hay pedidos registrados',
                 style: TextStyle(
                   color: Colors.grey.shade500,
                   fontWeight: FontWeight.w500,
@@ -114,15 +122,10 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
               itemBuilder: (context, index) {
                 final pedido = pedidos[index];
                 final estado = pedido['estado'];
-
-                // 🌟 DETECTAMOS SI EL PEDIDO YA FUE RECIBIDO
                 final esPedidoRecibido = estado == 'recibido';
-
                 final cliente = pedido['usuario'] != null
                     ? "${pedido['usuario']['nombre']} ${pedido['usuario']['apellido']}"
                     : "Cliente desconocido";
-
-                // Extraemos números del UUID para identificar el pedido de forma bonita
                 final soloNumeros = pedido['id'].toString().replaceAll(
                   RegExp(r'[^0-9]'),
                   '',
@@ -154,7 +157,6 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Encabezado con número de orden e indicador de estado
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -189,9 +191,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 10),
-
                         Text(
                           "Total: Bs. ${pedido['total']}",
                           style: const TextStyle(
@@ -199,10 +199,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-
                         const SizedBox(height: 12),
-
-                        // Etiqueta de Estado
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -232,13 +229,9 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 12),
-
-                        // Acciones de la orden
                         Row(
                           children: [
-                            // Botón "Ver detalles"
                             Flexible(
                               flex: 1,
                               child: SizedBox(
@@ -266,10 +259,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                 ),
                               ),
                             ),
-
                             const SizedBox(width: 10),
-
-                            // Selector de estado o Vista de completado si ya fue recibido
                             Flexible(
                               flex: 1,
                               child: esPedidoRecibido
@@ -345,19 +335,20 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                         );
                                         cargarPedidos();
                                       },
-                                      items: estadosAdmin.map((e) {
-                                        return DropdownMenuItem(
-                                          value: e,
-                                          // 🌟 Impedimos seleccionar estados incoherentes manualmente si se desea
-                                          child: Text(
-                                            estadoLabel(e),
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              fontSize: 13,
+                                      items: estadosAdmin
+                                          .map(
+                                            (e) => DropdownMenuItem(
+                                              value: e,
+                                              child: Text(
+                                                estadoLabel(e),
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                ),
+                                              ),
                                             ),
-                                          ),
-                                        );
-                                      }).toList(),
+                                          )
+                                          .toList(),
                                     ),
                             ),
                           ],
@@ -371,10 +362,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
     );
   }
 
-  // Modal de Detalle
   void mostrarDetallePedido(String pedidoId) async {
     final detalles = await service.getDetallePedido(pedidoId);
-
     showDialog(
       context: context,
       builder: (_) => Dialog(
