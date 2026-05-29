@@ -1,6 +1,6 @@
-// lib/features/client/home/screen/order_detail_screen.dart
 import 'package:flutter/material.dart';
 import '../service/order_service.dart';
+import '../../orders/services/invoice_service.dart'; // ← IMPORTANTE
 
 class OrderDetailScreen extends StatefulWidget {
   final Map<String, dynamic> pedido;
@@ -13,8 +13,10 @@ class OrderDetailScreen extends StatefulWidget {
 
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
   final OrderService _service = OrderService();
+  final InvoiceService _invoiceService = InvoiceService(); // ← NUEVO
   List<Map<String, dynamic>> _detalles = [];
   bool _loading = true;
+  bool _isPrinting = false; // ← NUEVO
 
   final Color rosaPrincipal = const Color(0xFFFF69B4);
   final Color rosaSuave = const Color(0xFFFFF0F5);
@@ -29,56 +31,125 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final id = widget.pedido['id']?.toString() ?? '';
     try {
       final res = await _service.getDetallePedido(id);
-      if (mounted) setState(() { _detalles = res; _loading = false; });
+      if (mounted)
+        setState(() {
+          _detalles = res;
+          _loading = false;
+        });
     } catch (e) {
       if (mounted) setState(() => _loading = false);
     }
   }
 
+  // 🖨️ NUEVO: Imprimir factura
+  Future<void> _printInvoice() async {
+    setState(() => _isPrinting = true);
+
+    // Preparar productos para la factura
+    final products = _detalles.map((item) {
+      return {
+        'name': item['producto']?['nombre']?.toString() ?? 'Producto',
+        'quantity': (item['cantidad'] as int?) ?? 1,
+        'price': (item['precio_unitario'] as num?)?.toDouble() ?? 0.0,
+      };
+    }).toList();
+
+    final subtotal = (widget.pedido['subtotal'] as num?)?.toDouble() ?? 0.0;
+    final shipping = (widget.pedido['costo_envio'] as num?)?.toDouble() ?? 0.0;
+    final total = (widget.pedido['total'] as num?)?.toDouble() ?? 0.0;
+    final fechaPedido = widget.pedido['fecha_pedido']?.toString() ?? '';
+    String fechaFormato = '';
+    if (fechaPedido.isNotEmpty) {
+      final dt = DateTime.tryParse(fechaPedido);
+      if (dt != null) {
+        fechaFormato =
+            '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+      }
+    }
+
+    await _invoiceService.printInvoice(
+      orderId: widget.pedido['id']?.toString() ?? '',
+      date: fechaFormato,
+      customerName:
+          'Cliente Sweet', // Puedes obtener el nombre del usuario logueado
+      customerEmail:
+          'cliente@sweet.com', // Puedes obtener el email del usuario logueado
+      address: widget.pedido['direccion_entrega']?.toString() ?? '—',
+      paymentMethod:
+          widget.pedido['metodo_pago']?.toString() == 'tarjeta_simulada'
+          ? 'Tarjeta de crédito/débito'
+          : 'Pago contra entrega',
+      products: products,
+      subtotal: subtotal,
+      shipping: shipping,
+      total: total,
+    );
+
+    if (mounted) setState(() => _isPrinting = false);
+  }
+
   // ── Helpers de estado ────────────────────────────────────
   String _estadoLabel(String estado) {
     switch (estado) {
-      case 'pendiente':       return 'Pendiente';
-      case 'en_preparacion':  return 'En preparación';
-      case 'listo':           return 'Listo';
-      case 'enviado':         return 'Enviado';
-      case 'recibido':        return 'Recibido';
-      default:                return estado;
+      case 'pendiente':
+        return 'Pendiente';
+      case 'en_preparacion':
+        return 'En preparación';
+      case 'listo':
+        return 'Listo';
+      case 'enviado':
+        return 'Enviado';
+      case 'recibido':
+        return 'Recibido';
+      default:
+        return estado;
     }
   }
 
   Color _estadoColor(String estado) {
     switch (estado) {
-      case 'pendiente':       return Colors.grey.shade500;
-      case 'en_preparacion':  return Colors.amber.shade700;
-      case 'listo':           return Colors.lightBlue.shade400;
-      case 'enviado':         return Colors.purple.shade300;
-      case 'recibido':        return Colors.pink.shade300;
-      default:                return Colors.black;
+      case 'pendiente':
+        return Colors.grey.shade500;
+      case 'en_preparacion':
+        return Colors.amber.shade700;
+      case 'listo':
+        return Colors.lightBlue.shade400;
+      case 'enviado':
+        return Colors.purple.shade300;
+      case 'recibido':
+        return Colors.pink.shade300;
+      default:
+        return Colors.black;
     }
   }
 
   IconData _estadoIcon(String estado) {
     switch (estado) {
-      case 'pendiente':       return Icons.favorite_border_rounded;
-      case 'en_preparacion':  return Icons.auto_awesome_rounded;
-      case 'listo':           return Icons.card_giftcard_rounded;
-      case 'enviado':         return Icons.local_shipping_rounded;
-      case 'recibido':        return Icons.celebration_rounded;
-      default:                return Icons.help_outline_rounded;
+      case 'pendiente':
+        return Icons.favorite_border_rounded;
+      case 'en_preparacion':
+        return Icons.auto_awesome_rounded;
+      case 'listo':
+        return Icons.card_giftcard_rounded;
+      case 'enviado':
+        return Icons.local_shipping_rounded;
+      case 'recibido':
+        return Icons.celebration_rounded;
+      default:
+        return Icons.help_outline_rounded;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final estado        = widget.pedido['estado']?.toString() ?? 'pendiente';
-    final total         = widget.pedido['total'];
-    final subtotal      = widget.pedido['subtotal'];
-    final costoEnvio    = widget.pedido['costo_envio'];
-    final direccion     = widget.pedido['direccion_entrega']?.toString() ?? '—';
-    final metodoPago    = widget.pedido['metodo_pago']?.toString() ?? '—';
-    final fechaPedido   = widget.pedido['fecha_pedido']?.toString();
-    final notas         = widget.pedido['notas']?.toString();
+    final estado = widget.pedido['estado']?.toString() ?? 'pendiente';
+    final total = widget.pedido['total'];
+    final subtotal = widget.pedido['subtotal'];
+    final costoEnvio = widget.pedido['costo_envio'];
+    final direccion = widget.pedido['direccion_entrega']?.toString() ?? '—';
+    final metodoPago = widget.pedido['metodo_pago']?.toString() ?? '—';
+    final fechaPedido = widget.pedido['fecha_pedido']?.toString();
+    final notas = widget.pedido['notas']?.toString();
 
     // Formatear fecha
     String fechaFormato = '—';
@@ -108,6 +179,23 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
+        // 🖨️ BOTÓN DE IMPRIMIR
+        actions: [
+          IconButton(
+            icon: _isPrinting
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.print, color: Colors.white),
+            onPressed: _isPrinting || _loading ? null : _printInvoice,
+            tooltip: 'Imprimir factura',
+          ),
+        ],
       ),
       body: _loading
           ? Center(child: CircularProgressIndicator(color: rosaPrincipal))
@@ -121,12 +209,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Estado del pedido',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 14)),
+                        const Text(
+                          'Estado del pedido',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: _estadoColor(estado).withOpacity(0.12),
                             borderRadius: BorderRadius.circular(20),
@@ -134,8 +228,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(_estadoIcon(estado),
-                                  color: _estadoColor(estado), size: 14),
+                              Icon(
+                                _estadoIcon(estado),
+                                color: _estadoColor(estado),
+                                size: 14,
+                              ),
                               const SizedBox(width: 5),
                               Text(
                                 _estadoLabel(estado),
@@ -158,23 +255,30 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _infoFila(Icons.calendar_today_outlined,
-                            'Fecha', fechaFormato),
+                        _infoFila(
+                          Icons.calendar_today_outlined,
+                          'Fecha',
+                          fechaFormato,
+                        ),
                         const SizedBox(height: 10),
-                        _infoFila(Icons.location_on_outlined,
-                            'Dirección de entrega', direccion),
+                        _infoFila(
+                          Icons.location_on_outlined,
+                          'Dirección de entrega',
+                          direccion,
+                        ),
                         const SizedBox(height: 10),
-                        _infoFila(Icons.payment_outlined,
-                            'Método de pago',
-                            metodoPago == 'tarjeta_simulada'
-                                ? 'Tarjeta de crédito/débito'
-                                : 'Pago contra entrega'),
+                        _infoFila(
+                          Icons.payment_outlined,
+                          'Método de pago',
+                          metodoPago == 'tarjeta_simulada'
+                              ? 'Tarjeta de crédito/débito'
+                              : 'Pago contra entrega',
+                        ),
                         if (notas != null &&
                             notas.isNotEmpty &&
                             !notas.startsWith('asignado:')) ...[
                           const SizedBox(height: 10),
-                          _infoFila(
-                              Icons.notes_outlined, 'Notas', notas),
+                          _infoFila(Icons.notes_outlined, 'Notas', notas),
                         ],
                       ],
                     ),
@@ -185,25 +289,33 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   const Text(
                     'Productos',
                     style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Color(0xFFD81B60)),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xFFD81B60),
+                    ),
                   ),
                   const SizedBox(height: 8),
 
                   _detalles.isEmpty
                       ? _seccion(
                           child: Center(
-                            child: Column(children: [
-                              Icon(Icons.inbox_outlined,
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.inbox_outlined,
                                   size: 40,
-                                  color: Colors.grey.shade300),
-                              const SizedBox(height: 8),
-                              Text('No hay productos registrados',
+                                  color: Colors.grey.shade300,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'No hay productos registrados',
                                   style: TextStyle(
-                                      color: Colors.grey.shade400,
-                                      fontSize: 13)),
-                            ]),
+                                    color: Colors.grey.shade400,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         )
                       : Column(
@@ -212,33 +324,31 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             final item = e.value;
                             final nombreProducto =
                                 item['producto']?['nombre']?.toString() ??
-                                    'Producto';
-                            final imagenUrl =
-                                item['producto']?['imagen_url']?.toString();
-                            final cantidad =
-                                (item['cantidad'] as int?) ?? 1;
+                                'Producto';
+                            final imagenUrl = item['producto']?['imagen_url']
+                                ?.toString();
+                            final cantidad = (item['cantidad'] as int?) ?? 1;
                             final precioUnit =
-                                (item['precio_unitario'] as num?)
-                                    ?.toDouble() ??
-                                    0.0;
+                                (item['precio_unitario'] as num?)?.toDouble() ??
+                                0.0;
                             final subtotalItem =
                                 (item['subtotal'] as num?)?.toDouble() ??
-                                    (cantidad * precioUnit);
+                                (cantidad * precioUnit);
 
                             return Container(
                               margin: EdgeInsets.only(
-                                  bottom:
-                                      i < _detalles.length - 1 ? 10 : 0),
+                                bottom: i < _detalles.length - 1 ? 10 : 0,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                    color: rosaPrincipal.withOpacity(0.12),
-                                    width: 1.5),
+                                  color: rosaPrincipal.withOpacity(0.12),
+                                  width: 1.5,
+                                ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color:
-                                        rosaPrincipal.withOpacity(0.04),
+                                    color: rosaPrincipal.withOpacity(0.04),
                                     blurRadius: 8,
                                     offset: const Offset(0, 3),
                                   ),
@@ -246,82 +356,104 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.all(12),
-                                child: Row(children: [
-                                  // Imagen
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Container(
-                                      width: 60,
-                                      height: 60,
-                                      color: rosaPrincipal.withOpacity(0.1),
-                                      child: imagenUrl != null &&
-                                              imagenUrl.isNotEmpty
-                                          ? Image.network(imagenUrl,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (_, __, ___) =>
-                                                  Icon(Icons.spa,
+                                child: Row(
+                                  children: [
+                                    // Imagen
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Container(
+                                        width: 60,
+                                        height: 60,
+                                        color: rosaPrincipal.withOpacity(0.1),
+                                        child:
+                                            imagenUrl != null &&
+                                                imagenUrl.isNotEmpty
+                                            ? Image.network(
+                                                imagenUrl,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (_, __, ___) =>
+                                                    Icon(
+                                                      Icons.spa,
                                                       color: rosaPrincipal,
-                                                      size: 28))
-                                          : Icon(Icons.spa,
-                                              color: rosaPrincipal,
-                                              size: 28),
+                                                      size: 28,
+                                                    ),
+                                              )
+                                            : Icon(
+                                                Icons.spa,
+                                                color: rosaPrincipal,
+                                                size: 28,
+                                              ),
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 12),
+                                    const SizedBox(width: 12),
 
-                                  // Info producto
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(nombreProducto,
+                                    // Info producto
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            nombreProducto,
                                             style: const TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 14),
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                            ),
                                             maxLines: 2,
-                                            overflow: TextOverflow.ellipsis),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'Bs. ${precioUnit.toStringAsFixed(2)} c/u',
-                                          style: TextStyle(
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Bs. ${precioUnit.toStringAsFixed(2)} c/u',
+                                            style: TextStyle(
                                               fontSize: 12,
-                                              color: Colors.grey.shade500),
+                                              color: Colors.grey.shade500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    // Cantidad y subtotal
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 3,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: rosaPrincipal.withOpacity(
+                                              0.1,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'x$cantidad',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: rosaPrincipal,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          'Bs. ${subtotalItem.toStringAsFixed(2)}',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color: rosaPrincipal,
+                                          ),
                                         ),
                                       ],
                                     ),
-                                  ),
-
-                                  // Cantidad y subtotal
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.end,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          color: rosaPrincipal.withOpacity(0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                        child: Text('x$cantidad',
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                                color: rosaPrincipal)),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        'Bs. ${subtotalItem.toStringAsFixed(2)}',
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                            color: rosaPrincipal),
-                                      ),
-                                    ],
-                                  ),
-                                ]),
+                                  ],
+                                ),
                               ),
                             );
                           }).toList(),
@@ -331,34 +463,44 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
                   // ── Resumen de totales ─────────────────────
                   _seccion(
-                    child: Column(children: [
-                      _filaTotal('Subtotal',
-                          'Bs. ${(subtotal as num?)?.toStringAsFixed(2) ?? '—'}'),
-                      const SizedBox(height: 8),
-                      _filaTotal('Costo de envío',
-                          'Bs. ${(costoEnvio as num?)?.toStringAsFixed(2) ?? '—'}'),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 10),
-                        child: Divider(color: Color(0xFFFFE4E9)),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Total',
+                    child: Column(
+                      children: [
+                        _filaTotal(
+                          'Subtotal',
+                          'Bs. ${(subtotal as num?)?.toStringAsFixed(2) ?? '—'}',
+                        ),
+                        const SizedBox(height: 8),
+                        _filaTotal(
+                          'Costo de envío',
+                          'Bs. ${(costoEnvio as num?)?.toStringAsFixed(2) ?? '—'}',
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 10),
+                          child: Divider(color: Color(0xFFFFE4E9)),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Total',
                               style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFFD81B60))),
-                          Text(
-                            'Bs. ${(total as num?)?.toStringAsFixed(2) ?? '—'}',
-                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFD81B60),
+                              ),
+                            ),
+                            Text(
+                              'Bs. ${(total as num?)?.toStringAsFixed(2) ?? '—'}',
+                              style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
-                                color: rosaPrincipal),
-                          ),
-                        ],
-                      ),
-                    ]),
+                                color: rosaPrincipal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 20),
@@ -370,53 +512,55 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   // ── Widgets auxiliares ──────────────────────────────────
   Widget _seccion({required Widget child}) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: rosaPrincipal.withOpacity(0.1), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: rosaPrincipal.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
+    width: double.infinity,
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: rosaPrincipal.withOpacity(0.1), width: 1.5),
+      boxShadow: [
+        BoxShadow(
+          color: rosaPrincipal.withOpacity(0.04),
+          blurRadius: 10,
+          offset: const Offset(0, 3),
+        ),
+      ],
+    ),
+    child: child,
+  );
+
+  Widget _infoFila(IconData icon, String label, String valor) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Icon(icon, size: 16, color: rosaPrincipal),
+      const SizedBox(width: 8),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              valor,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
             ),
           ],
         ),
-        child: child,
-      );
-
-  Widget _infoFila(IconData icon, String label, String valor) => Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 16, color: rosaPrincipal),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
-                    style: TextStyle(
-                        fontSize: 11, color: Colors.grey.shade500)),
-                const SizedBox(height: 2),
-                Text(valor,
-                    style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w500)),
-              ],
-            ),
-          ),
-        ],
-      );
+      ),
+    ],
+  );
 
   Widget _filaTotal(String label, String valor) => Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label,
-              style: const TextStyle(fontSize: 14, color: Colors.black54)),
-          Text(valor,
-              style: const TextStyle(
-                  fontSize: 14, fontWeight: FontWeight.w500)),
-        ],
-      );
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(label, style: const TextStyle(fontSize: 14, color: Colors.black54)),
+      Text(
+        valor,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+      ),
+    ],
+  );
 }
