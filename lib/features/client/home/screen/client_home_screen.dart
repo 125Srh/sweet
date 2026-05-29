@@ -4,15 +4,16 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sweet/features/client/home/screen/client_detail_screen.dart';
 import 'package:sweet/main.dart';
-import '../widget/client_category_item.dart';
+import '../WIDGET/client_category_item.dart';
 import 'package:provider/provider.dart';
 import '../provider/client_provider.dart';
 import 'package:sweet/features/client/cart/provider/cart_provider.dart';
 import 'package:sweet/features/client/cart/screen/cart_screen.dart';
-import 'package:sweet/features/client/cart/widget/add_to_cart_button.dart';
+import 'package:sweet/features/client/cart/WIDGET/add_to_cart_button.dart';
 import 'package:sweet/features/client/favorites/screen/favorites_screen.dart';
-import 'package:sweet/features/client/home/widget/search_screen.dart';
+import 'package:sweet/features/client/home/WIDGET/search_screen.dart';
 import 'package:sweet/features/client/home/screen/client_orders_screen.dart';
+import 'package:sweet/features/client/home/WIDGET/notification_bell.dart'; // ✅ IMPORT CORREGIDO
 
 import 'package:sweet/main.dart';
 
@@ -79,6 +80,9 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
+          // 🔔 NOTIFICACIONES - Componente bonito
+          const NotificationBell(),
+          // PopupMenu existente
           PopupMenuButton<String>(
             icon: const Icon(Icons.person_outline, color: Color(0xFFFF69B4)),
             offset: const Offset(0, 45),

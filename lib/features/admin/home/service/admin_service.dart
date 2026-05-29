@@ -20,11 +20,67 @@ class AdminService {
 
   Future<void> crearProducto(Map<String, dynamic> data) async {
     try {
-      await supabase.from('producto').insert(data);
+      // 1️⃣ Insertar el producto y obtener el id y datos
+      final res = await supabase
+          .from('producto')
+          .insert(data)
+          .select()
+          .single();
+
       print("✅ Producto insertado correctamente");
+
+      // 2️⃣ Enviar notificación a todos los clientes automáticamente
+      await _notificarNuevoProductoAClientes(
+        productoId: res['id'].toString(),
+        nombre: res['nombre'] ?? 'Nuevo producto',
+        precio: (res['precio'] as num?)?.toDouble() ?? 0.0,
+      );
     } catch (e) {
       print("❌ ERROR AL CREAR PRODUCTO: $e");
       rethrow;
+    }
+  }
+
+  /// Envía notificación de nuevo producto a todos los clientes activos
+  Future<void> _notificarNuevoProductoAClientes({
+    required String productoId,
+    required String nombre,
+    required double precio,
+  }) async {
+    try {
+      // Traer todos los usuarios con rol cliente
+      final clientes = await supabase
+          .from('usuario')
+          .select('id')
+          .eq('rol', 'cliente')
+          .eq('activo', true);
+
+      if (clientes.isEmpty) {
+        print("⚠️ No hay clientes activos para notificar");
+        return;
+      }
+
+      // Armar la lista de notificaciones para insertar de una sola vez
+      final notificaciones = clientes
+          .map(
+            (c) => {
+              'usuario_id': c['id'],
+              'tipo': 'nuevo_producto',
+              'titulo': '¡Nuevo! $nombre ya disponible',
+              'mensaje':
+                  'Acaba de llegar a nuestra tienda. ¡Sé la primera en probarlo!',
+              'producto_id': productoId,
+              'leida': false,
+            },
+          )
+          .toList();
+
+      // Insertar todas de una sola vez (bulk insert)
+      await supabase.from('notificaciones_cliente').insert(notificaciones);
+
+      print("✅ Notificaciones enviadas a ${clientes.length} clientes");
+    } catch (e) {
+      print("❌ Error enviando notificaciones a clientes: $e");
     }
   }
 
@@ -131,7 +187,7 @@ class AdminService {
   }
 
   // ══════════════════════════════════════════════════════════
-  // 🔔 NOTIFICACIONES
+  // 🔔 NOTIFICACIONES ADMIN
   // ══════════════════════════════════════════════════════════
 
   Future<List<Map<String, dynamic>>> getNotificaciones() async {
@@ -202,7 +258,8 @@ class AdminService {
     try {
       await supabase
           .from('notificaciones')
-          .update({'leida': true}).eq('id', id);
+          .update({'leida': true})
+          .eq('id', id);
     } catch (e) {
       print("❌ Error marcando notificación como leída: $e");
     }
@@ -212,7 +269,8 @@ class AdminService {
     try {
       await supabase
           .from('notificaciones')
-          .update({'leida': true}).eq('leida', false);
+          .update({'leida': true})
+          .eq('leida', false);
     } catch (e) {
       print("❌ Error marcando todas como leídas: $e");
     }
@@ -281,13 +339,16 @@ class AdminService {
 
   Future<List<Map<String, dynamic>>> getPedidos() async {
     try {
-      final res = await supabase.from('pedido').select('''
+      final res = await supabase
+          .from('pedido')
+          .select('''
           id,
           total,
           estado,
           fecha_pedido,
           usuario:usuario_id (nombre, apellido)
-        ''').order('fecha_pedido', ascending: false);
+        ''')
+          .order('fecha_pedido', ascending: false);
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {
       print("❌ Error cargando pedidos: $e");
@@ -297,10 +358,13 @@ class AdminService {
 
   Future<void> actualizarEstadoPedido(String id, String estado) async {
     try {
-      await supabase.from('pedido').update({
-        'estado': estado,
-        'fecha_actualizacion': DateTime.now().toIso8601String(),
-      }).eq('id', id);
+      await supabase
+          .from('pedido')
+          .update({
+            'estado': estado,
+            'fecha_actualizacion': DateTime.now().toIso8601String(),
+          })
+          .eq('id', id);
       print("✅ Estado actualizado");
     } catch (e) {
       print("❌ Error actualizando pedido: $e");
@@ -309,11 +373,14 @@ class AdminService {
 
   Future<List<Map<String, dynamic>>> getDetallePedido(String pedidoId) async {
     try {
-      final res = await supabase.from('pedido_detalle').select('''
+      final res = await supabase
+          .from('pedido_detalle')
+          .select('''
           cantidad,
           subtotal,
           producto:producto_id (nombre)
-        ''').eq('pedido_id', pedidoId);
+        ''')
+          .eq('pedido_id', pedidoId);
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {
       print("❌ Error detalle pedido: $e");

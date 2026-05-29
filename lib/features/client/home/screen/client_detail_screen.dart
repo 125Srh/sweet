@@ -114,95 +114,104 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFF0F5),
-      body: Column(
-        children: [
-          // 🔥 IMAGEN + GRADIENTE + BACK + FAVORITO
-          Stack(
-            children: [
-              SizedBox(
-                height: 450,
-                width: double.infinity,
-                child: image != null && image != ''
-                    ? Image.network(
-                        image,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            const Center(child: Icon(Icons.image, size: 100)),
-                      )
-                    : const Center(child: Icon(Icons.spa, size: 80)),
-              ),
-
-              // 💕 GRADIENTE ROSADO — igual que el original
-              Container(
-                height: 450,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.transparent,
-                      const Color(0xFFF48FB1).withOpacity(0.3),
-                      const Color(0xFFF48FB1).withOpacity(0.6),
-                    ],
-                    stops: const [0.6, 0.8, 1.0],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
-              ),
-
-              // 🔙 BOTÓN BACK — igual que el original
-              Positioned(
-                top: 40,
-                left: 10,
-                child: CircleAvatar(
-                  backgroundColor: Colors.white,
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Color(0xFFD81B60),
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-              ),
-
-              // ❤️ BOTÓN FAVORITO — añadido arriba a la derecha
-              Positioned(
-                top: 40,
-                right: 10,
-                child: CircleAvatar(
-                  backgroundColor: Colors.white,
-                  child: _loadingFav
-                      ? const Padding(
-                          padding: EdgeInsets.all(10),
-                          child: SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Color(0xFFFF69B4),
-                            ),
-                          ),
+      // 👇 Botón comprar fijo abajo, no se mueve al hacer scroll
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
+        child: SizedBox(
+          width: double.infinity,
+          child: SwipeToCartButton(onConfirmed: _agregarAlCarrito),
+        ),
+      ),
+      body: SingleChildScrollView(
+        // 👈 FIX: scroll para evitar overflow
+        child: Column(
+          children: [
+            // 🔥 IMAGEN + GRADIENTE + BACK + FAVORITO
+            Stack(
+              children: [
+                SizedBox(
+                  height: 450,
+                  width: double.infinity,
+                  child: image != null && image != ''
+                      ? Image.network(
+                          image,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              const Center(child: Icon(Icons.image, size: 100)),
                         )
-                      : IconButton(
-                          icon: Icon(
-                            _esFavorito
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            color: const Color(0xFFFF69B4),
-                          ),
-                          onPressed: _toggleFavorito,
-                        ),
+                      : const Center(child: Icon(Icons.spa, size: 80)),
                 ),
-              ),
-            ],
-          ),
 
-          // 🔥 CONTENIDO — igual que el original
-          Expanded(
-            child: Transform.translate(
+                // 💕 GRADIENTE ROSADO
+                Container(
+                  height: 450,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.transparent,
+                        const Color(0xFFF48FB1).withOpacity(0.3),
+                        const Color(0xFFF48FB1).withOpacity(0.6),
+                      ],
+                      stops: const [0.6, 0.8, 1.0],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                ),
+
+                // 🔙 BOTÓN BACK
+                Positioned(
+                  top: 40,
+                  left: 10,
+                  child: CircleAvatar(
+                    backgroundColor: Colors.white,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: Color(0xFFD81B60),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                ),
+
+                // ❤️ BOTÓN FAVORITO
+                Positioned(
+                  top: 40,
+                  right: 10,
+                  child: CircleAvatar(
+                    backgroundColor: Colors.white,
+                    child: _loadingFav
+                        ? const Padding(
+                            padding: EdgeInsets.all(10),
+                            child: SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFFFF69B4),
+                              ),
+                            ),
+                          )
+                        : IconButton(
+                            icon: Icon(
+                              _esFavorito
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: const Color(0xFFFF69B4),
+                            ),
+                            onPressed: _toggleFavorito,
+                          ),
+                  ),
+                ),
+              ],
+            ),
+
+            // 🔥 CONTENIDO
+            Transform.translate(
               offset: const Offset(0, -30),
               child: Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
                 decoration: const BoxDecoration(
                   borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
                   color: Colors.white,
@@ -245,7 +254,7 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
 
                     const SizedBox(height: 20),
 
-                    // 📝 DESCRIPCIÓN TITLE
+                    // 📝 DESCRIPCIÓN
                     const Text(
                       'Descripción',
                       style: TextStyle(
@@ -257,7 +266,6 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
 
                     const SizedBox(height: 10),
 
-                    // 📄 DESCRIPCIÓN TEXTO
                     Text(
                       description,
                       style: const TextStyle(
@@ -266,19 +274,13 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
                       ),
                     ),
 
-                    const Spacer(),
-
-                    // 💖 BOTÓN SWIPE — ahora conectado al CartProvider real
-                    SizedBox(
-                      width: double.infinity,
-                      child: SwipeToCartButton(onConfirmed: _agregarAlCarrito),
-                    ),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
