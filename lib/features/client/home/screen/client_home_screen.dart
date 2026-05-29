@@ -36,10 +36,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   }
 
   void _showComingSoon(String feature) {
-    // 🌟 1. Limpiamos cualquier SnackBar activo o colgado para detener sus animaciones
     messengerKey.currentState?.clearSnackBars();
-
-    // 🌟 2. Mostramos el nuevo usando la clave global sin tocar el 'context' de la pantalla
     messengerKey.currentState?.showSnackBar(
       SnackBar(
         content: Text('🚧 $feature - ¡Próximamente!'),
@@ -89,12 +86,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               borderRadius: BorderRadius.circular(14),
             ),
             onSelected: (value) async {
-              // 🔍 Diagnóstico en vivo
               debugPrint('🚀 [DIAGNÓSTICO] PopupMenu seleccionado: $value');
               debugPrint('📌 [DIAGNÓSTICO] ¿El Home está montado?: $mounted');
 
               try {
-                // Intentamos limpiar SnackBars antes de que falle el framework
                 messengerKey.currentState?.clearSnackBars();
 
                 switch (value) {
@@ -129,8 +124,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
 
                     final confirmar = await showDialog<bool>(
                       context: context,
-                      useRootNavigator:
-                          true, // Despliega la alerta en el nodo raíz
+                      useRootNavigator: true,
                       builder: (ctx) => AlertDialog(
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -160,23 +154,15 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                         '🚀 [DIAGNÓSTICO] Confirmación aceptada. Ejecutando SignOut...',
                       );
 
-                      // 🌟 PASO 1: Capturamos una referencia global del ScaffoldMessenger antes de limpiar nada
                       final messenger = messengerKey.currentState;
 
-                      // 🌟 PASO 2: REDIRECCIÓN PREVENTIVA IMPECABLE
-                      // En lugar de esperar a que termine Supabase, movemos al usuario YA al login.
-                      // Esto desmonta de forma segura el Home y evita que los listeners del Provider choquen con él.
                       if (mounted) {
                         context.go('/login');
                       }
 
-                      // 🌟 PASO 3: RETARDAMOS EL SIGNOUT UNA FRACCIÓN DE SEGUNDO
-                      // Le da tiempo a Flutter de limpiar el árbol de widgets de la pantalla vieja
                       Future.delayed(const Duration(milliseconds: 100), () async {
                         try {
                           await Supabase.instance.client.auth.signOut();
-
-                          // Muestra el mensaje de éxito usando la clave global estable
                           messenger?.clearSnackBars();
                           messenger?.showSnackBar(
                             const SnackBar(
@@ -244,7 +230,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       ),
       body: Column(
         children: [
-          // ── BANNER PROMOCIONAL ──────────────────
+          // ── BANNER PROMOCIONAL (SIN botón "Ver ofertas") ──
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
             child: ClipRRect(
@@ -273,42 +259,22 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                   ),
                   alignment: Alignment.bottomLeft,
                   padding: const EdgeInsets.all(16),
-                  child: const Row(
+                  child: const Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '¡Nueva Colección!',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Descubre nuestros productos exclusivos',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
+                      Text(
+                        '¡Nueva Colección!',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Chip(
-                        label: Text(
-                          'Ver ofertas',
-                          style: TextStyle(
-                            color: Color(0xFFFF69B4),
-                            fontSize: 11,
-                          ),
-                        ),
-                        backgroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(horizontal: 4),
+                      SizedBox(height: 4),
+                      Text(
+                        'Descubre nuestros productos exclusivos',
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
                       ),
                     ],
                   ),
@@ -651,7 +617,6 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           ),
         ],
       ),
-      //),
     );
   }
 }
