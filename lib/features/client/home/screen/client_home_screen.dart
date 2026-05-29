@@ -4,18 +4,16 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sweet/features/client/home/screen/client_detail_screen.dart';
 import 'package:sweet/main.dart';
-import '../widget/client_category_item.dart';
+import '../WIDGET/client_category_item.dart';
 import 'package:provider/provider.dart';
 import '../provider/client_provider.dart';
 import 'package:sweet/features/client/cart/provider/cart_provider.dart';
 import 'package:sweet/features/client/cart/screen/cart_screen.dart';
-import 'package:sweet/features/client/cart/widget/add_to_cart_button.dart';
+import 'package:sweet/features/client/cart/WIDGET/add_to_cart_button.dart';
 import 'package:sweet/features/client/favorites/screen/favorites_screen.dart';
-import 'package:sweet/features/client/home/widget/search_screen.dart';
+import 'package:sweet/features/client/home/WIDGET/search_screen.dart';
 import 'package:sweet/features/client/home/screen/client_orders_screen.dart';
-import 'package:sweet/features/client/home/widget/notification_bell.dart'; // ✅ IMPORT CORREGIDO
-
-import 'package:sweet/main.dart';
+import 'package:sweet/features/client/home/WIDGET/notification_bell.dart'; // ✅ un solo import
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -37,222 +35,13 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   }
 
   void _showComingSoon(String feature) {
-    // 🌟 1. Limpiamos cualquier SnackBar activo o colgado para detener sus animaciones
     messengerKey.currentState?.clearSnackBars();
-
-    // 🌟 2. Mostramos el nuevo usando la clave global sin tocar el 'context' de la pantalla
     messengerKey.currentState?.showSnackBar(
       SnackBar(
         content: Text('🚧 $feature - ¡Próximamente!'),
         backgroundColor: const Color(0xFFFF69B4),
         duration: const Duration(seconds: 2),
       ),
-    );
-  }
-
-  Future<Map<String, dynamic>?> _obtenerDatosUsuario() async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return null;
-    try {
-      final data = await Supabase.instance.client
-          .from('usuario')
-          .select('nombre, apellido, email, rol')
-          .eq('id', user.id)
-          .maybeSingle();
-      if (data != null) {
-        return {
-          'nombre': '${data['nombre'] ?? ''} ${data['apellido'] ?? ''}'.trim(),
-          'email': data['email'] ?? user.email ?? '',
-          'rol': data['rol'] ?? 'Cliente',
-        };
-      }
-    } catch (e) {
-      debugPrint('Error al obtener datos de usuario: $e');
-    }
-    return {'nombre': 'Usuario', 'email': user.email ?? '', 'rol': 'Cliente'};
-  }
-
-  void _mostrarPerfilDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          elevation: 10,
-          backgroundColor: Colors.white,
-          child: FutureBuilder<Map<String, dynamic>?>(
-            future: _obtenerDatosUsuario(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SizedBox(
-                  height: 200,
-                  child: Center(
-                    child: CircularProgressIndicator(color: Color(0xFFFF69B4)),
-                  ),
-                );
-              }
-              final userData = snapshot.data;
-              final nombre = userData?['nombre'] ?? 'Usuario';
-              final email = userData?['email'] ?? 'No disponible';
-              final rol = userData?['rol'] ?? 'Cliente';
-
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFFFF69B4), Color(0xFFD81B60)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          const CircleAvatar(
-                            radius: 36,
-                            backgroundColor: Colors.white,
-                            child: Icon(
-                              Icons.person,
-                              size: 44,
-                              color: Color(0xFFD81B60),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            nombre.isNotEmpty ? nombre : 'Usuario',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              rol.toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 1.1,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          ListTile(
-                            leading: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFF69B4).withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.person_outline,
-                                color: Color(0xFFFF69B4),
-                              ),
-                            ),
-                            title: const Text(
-                              'Usuario',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            subtitle: Text(
-                              nombre.isNotEmpty ? nombre : 'Usuario',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                          const Divider(),
-                          ListTile(
-                            leading: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFF69B4).withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.email_outlined,
-                                color: Color(0xFFFF69B4),
-                              ),
-                            ),
-                            title: const Text(
-                              'Gmail',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            subtitle: Text(
-                              email,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        bottom: 16,
-                        left: 16,
-                        right: 16,
-                      ),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFD81B60),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          onPressed: () => Navigator.pop(dialogContext),
-                          child: const Text(
-                            'Cerrar',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        );
-      },
     );
   }
 
@@ -289,9 +78,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
-          // 🔔 NOTIFICACIONES - Componente bonito
-          const NotificationBell(),
-          // PopupMenu existente
+          const NotificationBell(), // 🔔
           PopupMenuButton<String>(
             icon: const Icon(Icons.person_outline, color: Color(0xFFFF69B4)),
             offset: const Offset(0, 45),
@@ -307,15 +94,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
 
                 switch (value) {
                   case 'pedidos':
-                    debugPrint(
-                      '🚀 [DIAGNÓSTICO] Intentando abrir ClientOrdersScreen...',
-                    );
-                    if (!mounted) {
-                      debugPrint(
-                        '⚠️ [ALERTA] Intentaste abrir pedidos en un widget desactivado!',
-                      );
-                      return;
-                    }
+                    if (!mounted) return;
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -330,11 +109,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     break;
 
                   case 'logout':
-                    debugPrint(
-                      '🚀 [DIAGNÓSTICO] Abriendo diálogo de cerrar sesión...',
-                    );
                     if (!mounted) return;
-
                     final confirmar = await showDialog<bool>(
                       context: context,
                       useRootNavigator: true,
@@ -363,38 +138,33 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                     );
 
                     if (confirmar == true) {
-                      debugPrint(
-                        '🚀 [DIAGNÓSTICO] Confirmación aceptada. Ejecutando SignOut...',
-                      );
-
                       final messenger = messengerKey.currentState;
-
-                      if (mounted) {
-                        context.go('/login');
-                      }
-
-                      Future.delayed(const Duration(milliseconds: 100), () async {
-                        try {
-                          await Supabase.instance.client.auth.signOut();
-                          messenger?.clearSnackBars();
-                          messenger?.showSnackBar(
-                            const SnackBar(
-                              content: Text('Sesión cerrada correctamente'),
-                              backgroundColor: Color(0xFFFF69B4),
-                            ),
-                          );
-                        } catch (signOutError) {
-                          debugPrint(
-                            '❌ Error real interno en Supabase SignOut: $signOutError',
-                          );
-                        }
-                      });
+                      if (mounted) context.go('/login');
+                      Future.delayed(
+                        const Duration(milliseconds: 100),
+                        () async {
+                          try {
+                            await Supabase.instance.client.auth.signOut();
+                            messenger?.clearSnackBars();
+                            messenger?.showSnackBar(
+                              const SnackBar(
+                                content: Text('Sesión cerrada correctamente'),
+                                backgroundColor: Color(0xFFFF69B4),
+                              ),
+                            );
+                          } catch (signOutError) {
+                            debugPrint(
+                              '❌ Error en Supabase SignOut: $signOutError',
+                            );
+                          }
+                        },
+                      );
                     }
                     break;
                 }
               } catch (e, stackTrace) {
-                debugPrint('❌ [ERROR DETECTADO EN POPUPMENU]: $e');
-                debugPrint('📋 STACKTRACE DEL ERROR:\n$stackTrace');
+                debugPrint('❌ [ERROR EN POPUPMENU]: $e');
+                debugPrint('📋 STACKTRACE:\n$stackTrace');
               }
             },
             itemBuilder: (ctx) => [
@@ -443,7 +213,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
       ),
       body: Column(
         children: [
-          // ── BANNER PROMOCIONAL (SIN botón "Ver ofertas") ──
+          // ── BANNER PROMOCIONAL ──
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
             child: ClipRRect(
@@ -496,7 +266,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             ),
           ),
 
-          // ── CATEGORÍAS ────────────────────────
+          // ── CATEGORÍAS ──
           const Padding(
             padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
             child: Text(
@@ -548,7 +318,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
             ),
           ),
 
-          // ── PRODUCTOS ──────────────────────────
+          // ── PRODUCTOS ──
           Expanded(
             child: RefreshIndicator(
               onRefresh: _refresh,
@@ -773,7 +543,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               _irAFavoritos();
               break;
             case 4:
-              _mostrarPerfilDialog(context);
+              _showComingSoon('Perfil');
               break;
           }
         },
