@@ -6,7 +6,7 @@ class AdminSearch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AdminsProvider>();
-    const pinkColor = Color.fromARGB(255, 255, 19, 98);
+    const pinkColor = Color(0xFFFF69B4);
 
     return Padding(
       padding: const EdgeInsets.all(12),

@@ -2,10 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../screens/admin_clients_screen.dart';
-import '../screens/admin_notifications_screen.dart';
-import '../screens/admin_orders_screen.dart';
 
+/// Índices del menú lateral admin:
+/// 0 Productos · 1 Clientes · 2 Notificaciones · 3 Reportes · 4 Pedidos
 class AdminDrawer extends StatelessWidget {
   final int selectedIndex;
 
@@ -13,7 +12,12 @@ class AdminDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const pinkColor = Color.fromARGB(255, 255, 19, 98);
+    const pinkColor = Color(0xFFFF69B4);
+
+    void irA(String ruta) {
+      Navigator.pop(context);
+      context.go(ruta);
+    }
 
     Widget item(
       IconData icon,
@@ -22,19 +26,20 @@ class AdminDrawer extends StatelessWidget {
       Color? color,
       VoidCallback? onTap,
     }) {
+      final itemColor = color ?? pinkColor;
       return ListTile(
         leading: Icon(
           icon,
-          color: selected ? pinkColor : color ?? Colors.grey[700],
+          color: itemColor,
         ),
         title: Text(
           title,
           style: TextStyle(
-            color: selected ? pinkColor : color ?? Colors.black87,
-            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+            color: itemColor,
+            fontWeight: selected ? FontWeight.bold : FontWeight.w500,
           ),
         ),
-        tileColor: selected ? pinkColor.withOpacity(0.1) : null,
+        tileColor: selected ? pinkColor.withOpacity(0.12) : null,
         onTap: onTap,
       );
     }
@@ -67,70 +72,35 @@ class AdminDrawer extends StatelessWidget {
             ),
           ),
 
-          // índice 0
           item(
             Icons.inventory_2,
             'Productos',
             selected: selectedIndex == 0,
-            onTap: () {
-              Navigator.pop(context);
-              context.go('/admin');
-            },
+            onTap: () => irA('/admin'),
           ),
-
-          // índice 1
           item(
             Icons.people_outline,
             'Clientes',
             selected: selectedIndex == 1,
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AdminClientsScreen()),
-              );
-            },
+            onTap: () => irA('/admin/clientes'),
           ),
-
-          // índice 2
           item(
             Icons.notifications_outlined,
             'Notificaciones de ventas',
             selected: selectedIndex == 2,
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const AdminNotificationsScreen(),
-                ),
-              );
-            },
+            onTap: () => irA('/admin/notificaciones'),
           ),
-
-          // índice 3
           item(
             Icons.bar_chart_outlined,
             'Reportes',
             selected: selectedIndex == 3,
-            onTap: () {
-              Navigator.pop(context);
-              context.go('/reportes');
-            },
+            onTap: () => irA('/reportes'),
           ),
-
-          // índice 4
           item(
             Icons.shopping_bag_outlined,
             'Gestionar Pedidos',
             selected: selectedIndex == 4,
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AdminOrdersScreen()),
-              );
-            },
+            onTap: () => irA('/admin/pedidos'),
           ),
 
           const Spacer(),
@@ -164,15 +134,14 @@ class AdminDrawer extends StatelessWidget {
                 ),
               );
 
-              if (confirmar == true) {
+              if (confirmar == true && context.mounted) {
                 Navigator.pop(context);
-                await Future.delayed(const Duration(milliseconds: 100));
                 try {
                   await Supabase.instance.client.auth.signOut();
                   if (!context.mounted) return;
                   context.go('/login');
                 } catch (e) {
-                  debugPrint("❌ [DRAWER ERROR] Falló al hacer signOut: $e");
+                  debugPrint('❌ [DRAWER] Error al cerrar sesión: $e');
                 }
               }
             },

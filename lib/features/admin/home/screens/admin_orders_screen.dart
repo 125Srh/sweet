@@ -14,8 +14,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   final service = AdminService();
   List<Map<String, dynamic>> pedidos = [];
 
-  final primaryPink = const Color(0xFFE91E63);
-  final softPink = const Color(0xFFFCE4EC);
+  static const _pink = Color(0xFFFF69B4);
+  final softPink = const Color(0xFFFFF0F5);
 
   @override
   void initState() {
@@ -97,13 +97,13 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const AdminDrawer(selectedIndex: 5), // ← drawer agregado
+      drawer: const AdminDrawer(selectedIndex: 4),
       appBar: AppBar(
         title: const Text(
           'Gestión de pedidos',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: primaryPink,
+        backgroundColor: _pink,
         centerTitle: true,
         // ← hamburguesa en lugar de flecha
         leading: Builder(
@@ -172,10 +172,10 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                               children: [
                                 CircleAvatar(
                                   radius: 16,
-                                  backgroundColor: primaryPink.withOpacity(0.1),
+                                  backgroundColor: _pink.withOpacity(0.1),
                                   child: Icon(
                                     Icons.person,
-                                    color: primaryPink,
+                                    color: _pink,
                                     size: 16,
                                   ),
                                 ),
@@ -247,7 +247,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                 height: 42,
                                 child: ElevatedButton.icon(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: primaryPink,
+                                    backgroundColor: _pink,
                                     foregroundColor: Colors.white,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
@@ -337,7 +337,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                             14,
                                           ),
                                           borderSide: BorderSide(
-                                            color: primaryPink,
+                                            color: _pink,
                                             width: 1.5,
                                           ),
                                         ),
@@ -402,7 +402,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: primaryPink,
+                  color: _pink,
                 ),
               ),
               const SizedBox(height: 12),
@@ -427,7 +427,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.shopping_bag, color: primaryPink),
+                          Icon(Icons.shopping_bag, color: _pink),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -444,7 +444,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                               Text(
                                 "Bs. ${item['subtotal']}",
                                 style: TextStyle(
-                                  color: primaryPink,
+                                  color: _pink,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -461,7 +461,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryPink,
+                    backgroundColor: _pink,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),

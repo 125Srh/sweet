@@ -29,7 +29,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
 
     return Scaffold(
       appBar: const AdminAppBar(),
-      drawer: const AdminDrawer(),
+      drawer: const AdminDrawer(selectedIndex: 0),
 
       body: Column(
         children: [

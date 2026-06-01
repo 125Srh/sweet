@@ -41,6 +41,7 @@ class ClientService {
     final response = await supabase
         .from('producto')
         .select()
+        .eq('activo', true)
         .order('created_at', ascending: false);
 
     return List<Map<String, dynamic>>.from(response);

@@ -1,6 +1,7 @@
 // lib/features/admin/home/widgets/admin_appbar.dart
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart';
 import '../service/admin_service.dart';
 
 // ══════════════════════════════════════════════════════════════
@@ -183,6 +184,70 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
                               ),
                             ),
                           ),
+                          const Divider(),
+                          ListTile(
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.logout,
+                                color: Colors.red,
+                              ),
+                            ),
+                            title: const Text(
+                              'Cuenta',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            subtitle: const Text(
+                              'Cerrar sesión',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.red,
+                              ),
+                            ),
+                            onTap: () async {
+                              Navigator.pop(dialogContext);
+                              final confirmar = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Cerrar sesión'),
+                                  content: const Text(
+                                    '¿Estás segura que deseas salir de Sweet?',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx, false),
+                                      child: const Text('Cancelar'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx, true),
+                                      child: const Text(
+                                        'Salir',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+
+                              if (confirmar == true) {
+                                try {
+                                  await Supabase.instance.client.auth.signOut();
+                                  if (!context.mounted) return;
+                                  context.go('/login');
+                                } catch (e) {
+                                  debugPrint("❌ [LOGOUT ERROR] Falló al hacer signOut: $e");
+                                }
+                              }
+                            },
+                          ),
                         ],
                       ),
                     ),
@@ -223,13 +288,13 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    const pinkColor = Color.fromARGB(255, 255, 19, 98);
+    const pinkColor = Color(0xFFFF69B4);
 
     return AppBar(
       backgroundColor: pinkColor,
       elevation: 0,
       title: const Text(
-        'MiTienda',
+        'Sweet',
         style: TextStyle(fontWeight: FontWeight.bold),
       ),
       actions: [
@@ -565,7 +630,7 @@ class _PanelContent extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF1362),
+                      color: const Color(0xFFFF69B4),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(

@@ -19,7 +19,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
   bool _loading = true;
   int _noLeidas = 0;
 
-  static const _pink = Color(0xFFFF1362);
+  static const _pink = Color(0xFFFF69B4);
 
   @override
   void initState() {
@@ -275,7 +275,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF0F5),
-      drawer: const AdminDrawer(selectedIndex: 3), // ← drawer agregado
+      drawer: const AdminDrawer(selectedIndex: 2),
       appBar: AppBar(
         backgroundColor: _pink,
         elevation: 0,
