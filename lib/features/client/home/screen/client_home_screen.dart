@@ -13,7 +13,8 @@ import 'package:sweet/features/client/cart/WIDGET/add_to_cart_button.dart';
 import 'package:sweet/features/client/favorites/screen/favorites_screen.dart';
 import 'package:sweet/features/client/home/WIDGET/search_screen.dart';
 import 'package:sweet/features/client/home/screen/client_orders_screen.dart';
-import 'package:sweet/features/client/home/WIDGET/notification_bell.dart'; // ✅ un solo import
+import 'package:sweet/features/client/home/WIDGET/notification_bell.dart';
+import 'package:sweet/features/client/profile/screen/client_profile_screen.dart'; // ✅ nuevo
 
 class ClientHomeScreen extends StatefulWidget {
   const ClientHomeScreen({super.key});
@@ -59,6 +60,13 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
     ).then((_) => setState(() => _currentNav = 0));
   }
 
+  void _irAlPerfil() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ClientProfileScreen()),
+    ).then((_) => setState(() => _currentNav = 0));
+  }
+
   Future<void> _refresh() async {
     await context.read<ClientProvider>().init();
     await context.read<CartProvider>().cargar();
@@ -78,7 +86,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
-          const NotificationBell(), // 🔔
+          const NotificationBell(),
           PopupMenuButton<String>(
             icon: const Icon(Icons.person_outline, color: Color(0xFFFF69B4)),
             offset: const Offset(0, 45),
@@ -93,6 +101,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                 messengerKey.currentState?.clearSnackBars();
 
                 switch (value) {
+                  case 'perfil':
+                    if (!mounted) return;
+                    _irAlPerfil();
+                    break;
+
                   case 'pedidos':
                     if (!mounted) return;
                     Navigator.push(
@@ -168,6 +181,17 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               }
             },
             itemBuilder: (ctx) => [
+              // ✅ Mi perfil — nuevo
+              const PopupMenuItem(
+                value: 'perfil',
+                child: Row(
+                  children: [
+                    Icon(Icons.person, size: 20, color: Color(0xFFD81B60)),
+                    SizedBox(width: 10),
+                    Text('Mi perfil'),
+                  ],
+                ),
+              ),
               const PopupMenuItem(
                 value: 'pedidos',
                 child: Row(
@@ -396,11 +420,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                         itemCount: provider.products.length,
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 0.62,
-                              crossAxisSpacing: 10,
-                              mainAxisSpacing: 10,
-                            ),
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.62,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                        ),
                         itemBuilder: (context, index) {
                           final product = provider.products[index];
                           final prodId = product['id']?.toString() ?? '';
@@ -435,8 +459,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                                       child: Container(
                                         width: double.infinity,
                                         color: color.withOpacity(0.2),
-                                        child:
-                                            imagen != null &&
+                                        child: imagen != null &&
                                                 imagen.toString().isNotEmpty
                                             ? Image.network(
                                                 imagen,
@@ -463,11 +486,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.fromLTRB(
-                                    10,
-                                    8,
-                                    10,
-                                    10,
-                                  ),
+                                      10, 8, 10, 10),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -543,7 +562,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
               _irAFavoritos();
               break;
             case 4:
-              _showComingSoon('Perfil');
+              _irAlPerfil(); // ✅ ahora navega al perfil real
               break;
           }
         },
@@ -596,7 +615,7 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
           ),
           const BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
-            label: 'Perfil',
+            label: 'Perfil', // ✅ ahora funcional
           ),
         ],
       ),

@@ -10,6 +10,7 @@ import 'package:sweet/features/auth/register/providers/register_provider.dart';
 import 'package:sweet/features/admin/home/providers/admin_provider.dart';
 import 'package:sweet/features/client/cart/provider/cart_provider.dart';
 import 'package:sweet/features/client/address_old_backup/providers/address_provider.dart';
+import 'package:sweet/features/client/profile/provider/profile_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +28,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ClientProvider()),
         ChangeNotifierProvider(create: (_) => AddressProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(
           create: (_) => NotificationProvider(),
         ), // 👈 nuevo
