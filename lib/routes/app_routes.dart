@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sweet/features/admin/home/screens/admin_home_screen.dart';
 import 'package:sweet/features/admin/home/screens/admin_clients_screen.dart';
 import 'package:sweet/features/admin/home/screens/admin_notifications_screen.dart';
+import 'package:sweet/features/admin/home/screens/admin_orders_screen.dart';
 import 'package:sweet/features/admin/sarahi/screens/reporte_ventas_screen.dart';
 import 'package:sweet/features/auth/login/screens/login_page.dart';
 import 'package:sweet/features/client/home/screen/client_home_screen.dart';
@@ -25,6 +26,10 @@ final router = GoRouter(
     GoRoute(
       path: '/admin/notificaciones',
       builder: (context, state) => const AdminNotificationsScreen(),
+    ),
+    GoRoute(
+      path: '/admin/pedidos',
+      builder: (context, state) => const AdminOrdersScreen(),
     ),
     GoRoute(
       path: '/client',

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
 import '../screens/reporte_ventas_screen.dart';
 
@@ -19,7 +21,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   bool _isLoading = true;
   late int _selectedIndex;
 
-  final Color _pinkColor = const Color.fromARGB(255, 255, 19, 98);
+  final Color _pinkColor = const Color(0xFFFF69B4);
 
   @override
   void initState() {
@@ -251,27 +253,30 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 ],
               ),
               const SizedBox(width: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircleAvatar(
-                      radius: 14,
-                      backgroundColor: _pinkColor,
-                      child: const Icon(Icons.person, color: Colors.white, size: 16),
-                    ),
-                    const SizedBox(width: 6),
-                    const Text(
-                      'Admin',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
-                    Icon(Icons.arrow_drop_down, color: Colors.grey[600], size: 18),
-                  ],
+              GestureDetector(
+                onTap: _cerrarSesionConfirmacion,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircleAvatar(
+                        radius: 14,
+                        backgroundColor: _pinkColor,
+                        child: const Icon(Icons.person, color: Colors.white, size: 16),
+                      ),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Admin',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                      ),
+                      Icon(Icons.arrow_drop_down, color: Colors.grey[600], size: 18),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -493,10 +498,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
             const SizedBox(width: 4),
             Padding(
               padding: const EdgeInsets.only(right: 12),
-              child: CircleAvatar(
-                radius: 16,
-                backgroundColor: Colors.white,
-                child: Icon(Icons.person, color: _pinkColor, size: 18),
+              child: GestureDetector(
+                onTap: _cerrarSesionConfirmacion,
+                child: CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Colors.white,
+                  child: Icon(Icons.person, color: _pinkColor, size: 18),
+                ),
               ),
             ),
           ],
@@ -523,6 +531,41 @@ class _ProductsScreenState extends State<ProductsScreen> {
           ],
         ),
       );
+    }
+  }
+
+  Future<void> _cerrarSesionConfirmacion() async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cerrar sesión'),
+        content: const Text(
+          '¿Estás segura que deseas salir de Sweet?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'Salir',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar == true) {
+      try {
+        await Supabase.instance.client.auth.signOut();
+        if (!context.mounted) return;
+        context.go('/login');
+      } catch (e) {
+        debugPrint("❌ [LOGOUT ERROR] Falló al hacer signOut: $e");
+      }
     }
   }
 

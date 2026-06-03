@@ -275,6 +275,35 @@ class AdminsProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> verificarPedidosPendientes(dynamic productoId) async {
+    try {
+      return await _service.tienePedidosPendientes(productoId);
+    } catch (e) {
+      print("❌ Error verificando pedidos pendientes en provider: $e");
+      return false;
+    }
+  }
+
+  Future<String?> toggleEstadoActivo(String id, bool actualActivo) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      await _service.actualizarProducto(id, {
+        'activo': !actualActivo,
+      });
+
+      await cargarProductos();
+      return null;
+    } catch (e) {
+      return e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+
   // ══════════════════════════════════════════════════════════
   // 🏷️ CATEGORÍAS Y MARCAS
   // ══════════════════════════════════════════════════════════

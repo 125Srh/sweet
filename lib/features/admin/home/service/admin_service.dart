@@ -387,4 +387,28 @@ class AdminService {
       return [];
     }
   }
+
+  Future<bool> tienePedidosPendientes(dynamic productoId) async {
+    try {
+      final res = await supabase
+          .from('pedido_detalle')
+          .select('pedido:pedido_id (estado)')
+          .eq('producto_id', productoId);
+
+      final detalles = List<Map<String, dynamic>>.from(res);
+      return detalles.any((detalle) {
+        final pedido = detalle['pedido'];
+        if (pedido == null) return false;
+        if (pedido is Map) {
+          final estado = pedido['estado'] as String?;
+          return estado != 'recibido' && estado != 'cancelado';
+        }
+        return false;
+      });
+    } catch (e) {
+      print("❌ Error verificando pedidos pendientes: $e");
+      return false;
+    }
+  }
 }
+

@@ -19,7 +19,7 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
   bool _loading = true;
   String _filtroEstado = 'todos';
 
-  static const _pink = Color(0xFFFF1362);
+  static const _pink = Color(0xFFFF69B4);
 
   @override
   void initState() {
@@ -115,7 +115,7 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF0F5),
       // ← Drawer agregado aquí
-      drawer: const AdminDrawer(selectedIndex: 2),
+      drawer: const AdminDrawer(selectedIndex: 1),
       appBar: AppBar(
         backgroundColor: _pink,
         elevation: 0,

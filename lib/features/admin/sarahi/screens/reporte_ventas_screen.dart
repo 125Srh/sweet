@@ -47,7 +47,7 @@ class _ReporteVentasScreenState extends State<ReporteVentasScreen> {
     'Diciembre',
   ];
 
-  static const _pink = Color(0xFFFF1362);
+  static const _pink = Color(0xFFFF69B4);
 
   @override
   void initState() {
