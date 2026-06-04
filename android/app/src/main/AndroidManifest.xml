@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 🔥 AGREGA ESTO AQUÍ -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    
     <application
         android:label="sweet"
         android:name="${applicationName}"
