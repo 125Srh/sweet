@@ -4,16 +4,16 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sweet/features/client/home/screen/client_detail_screen.dart';
 import 'package:sweet/main.dart';
-import '../WIDGET/client_category_item.dart';
+import '../widget/client_category_item.dart';
 import 'package:provider/provider.dart';
 import '../provider/client_provider.dart';
 import 'package:sweet/features/client/cart/provider/cart_provider.dart';
 import 'package:sweet/features/client/cart/screen/cart_screen.dart';
-import 'package:sweet/features/client/cart/WIDGET/add_to_cart_button.dart';
+import 'package:sweet/features/client/cart/widget/add_to_cart_button.dart';
 import 'package:sweet/features/client/favorites/screen/favorites_screen.dart';
-import 'package:sweet/features/client/home/WIDGET/search_screen.dart';
+import 'package:sweet/features/client/home/widget/search_screen.dart';
 import 'package:sweet/features/client/home/screen/client_orders_screen.dart';
-import 'package:sweet/features/client/home/WIDGET/notification_bell.dart';
+import 'package:sweet/features/client/home/widget/notification_bell.dart';
 import 'package:sweet/features/client/profile/screen/client_profile_screen.dart'; // ✅ nuevo
 
 class ClientHomeScreen extends StatefulWidget {
@@ -420,11 +420,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                         itemCount: provider.products.length,
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.62,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                        ),
+                              crossAxisCount: 2,
+                              childAspectRatio: 0.62,
+                              crossAxisSpacing: 10,
+                              mainAxisSpacing: 10,
+                            ),
                         itemBuilder: (context, index) {
                           final product = provider.products[index];
                           final prodId = product['id']?.toString() ?? '';
@@ -459,7 +459,8 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                                       child: Container(
                                         width: double.infinity,
                                         color: color.withOpacity(0.2),
-                                        child: imagen != null &&
+                                        child:
+                                            imagen != null &&
                                                 imagen.toString().isNotEmpty
                                             ? Image.network(
                                                 imagen,
@@ -486,7 +487,11 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.fromLTRB(
-                                      10, 8, 10, 10),
+                                    10,
+                                    8,
+                                    10,
+                                    10,
+                                  ),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
