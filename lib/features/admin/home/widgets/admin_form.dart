@@ -361,7 +361,7 @@ class _AdminFormState extends State<AdminForm> {
                                 height: 150,
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey[300]!),
+                                  border: Border.all(color: _pink, width: 1.0),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: _imagenFile != null
@@ -486,7 +486,7 @@ class _AdminFormState extends State<AdminForm> {
         // Control - número +  con el mismo estilo que los inputs
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
+            border: Border.all(color: _pink, width: 1.0),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -593,15 +593,16 @@ class _AdminFormState extends State<AdminForm> {
         maxLines: maxLines,
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: const TextStyle(color: _darkPink),
           prefixIcon: Icon(icon, color: _pink, size: 20),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey[300]!),
+            borderSide: const BorderSide(color: _pink, width: 1.0),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: _pink, width: 1.5),
+            borderSide: const BorderSide(color: _darkPink, width: 1.5),
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 14,
@@ -622,11 +623,11 @@ class _AdminFormState extends State<AdminForm> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: const BorderSide(color: _pink, width: 1.0),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _pink, width: 1.5),
+          borderSide: const BorderSide(color: _darkPink, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
@@ -652,11 +653,11 @@ class _AdminFormState extends State<AdminForm> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: const BorderSide(color: _pink, width: 1.0),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _pink, width: 1.5),
+          borderSide: const BorderSide(color: _darkPink, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,

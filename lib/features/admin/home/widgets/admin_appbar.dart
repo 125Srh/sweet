@@ -48,7 +48,7 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
           backgroundColor: Colors.white,
           child: FutureBuilder<Map<String, dynamic>?>(
             future: _obtenerDatosUsuario(),
-            builder: (context, snapshot) {
+            builder: (fbCtx, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const SizedBox(
                   height: 200,

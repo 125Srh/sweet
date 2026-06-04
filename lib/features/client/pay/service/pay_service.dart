@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class PayService {
   static final _db = Supabase.instance.client;
 
-  static Future<String> crearPedido({
+  static Future<PedidoResult> crearPedido({
     required String usuarioId,
     required double subtotal,
     required double envio,
@@ -16,13 +16,70 @@ class PayService {
     required List<Map<String, dynamic>> productos,
   }) async {
     try {
+      // 1. Consultar el stock actual en base de datos de todos los productos
+      final productIds = productos.map((p) => p['producto_id'].toString()).toList();
+      final productsInDb = await _db
+          .from('producto')
+          .select('id, nombre, stock')
+          .inFilter('id', productIds);
+
+      final stockMap = {
+        for (var p in productsInDb)
+          p['id'].toString(): {
+            'stock': (p['stock'] as int?) ?? 0,
+            'nombre': p['nombre'].toString(),
+          }
+      };
+
+      // 2. Clasificar productos en disponibles y agotados
+      final productosDisponibles = <Map<String, dynamic>>[];
+      final productosAgotados = <Map<String, dynamic>>[];
+
+      for (final p in productos) {
+        final pId = p['producto_id'].toString();
+        final cant = p['cantidad'] as int;
+        final dbProduct = stockMap[pId];
+        final dbStock = dbProduct != null ? (dbProduct['stock'] as int) : 0;
+        final nombre = dbProduct != null ? dbProduct['nombre'] : (p['nombre'] ?? 'Producto');
+
+        if (dbStock >= cant) {
+          productosDisponibles.add(p);
+        } else {
+          productosAgotados.add({
+            ...p,
+            'nombre': nombre,
+          });
+        }
+      }
+
+      // 3. Caso: Ningún producto disponible
+      if (productosAgotados.isNotEmpty && productosDisponibles.isEmpty) {
+        return PedidoResult(
+          pedidoId: null,
+          exitoTotal: false,
+          productosAgotadosNombres: productosAgotados.map((p) => p['nombre'].toString()).toList(),
+          productosCompradosNombres: [],
+          productosCompradosIds: [],
+          totalDisponibles: 0.0,
+        );
+      }
+
+      // 4. Caso: Hay productos disponibles (pueden ser todos o algunos)
+      final double subtotalDisponibles = productosDisponibles.fold<double>(0, (sum, p) {
+        final cant = p['cantidad'] as int;
+        final precio = (p['precio_unitario'] as num).toDouble();
+        return sum + (cant * precio);
+      });
+      final double totalDisponibles = subtotalDisponibles + envio;
+
+      // Crear el pedido
       final pedidoResult = await _db
           .from('pedido')
           .insert({
             'usuario_id': usuarioId,
             'estado': 'pendiente',
-            'subtotal': subtotal,
-            'total': total,
+            'subtotal': subtotalDisponibles,
+            'total': totalDisponibles,
             'costo_envio': envio,
             'metodo_pago': metodoPago,
             'direccion_entrega': direccion,
@@ -34,7 +91,8 @@ class PayService {
 
       final pedidoId = pedidoResult['id'].toString();
 
-      final pedidoDetalles = productos.map((producto) {
+      // Crear detalles del pedido
+      final pedidoDetalles = productosDisponibles.map((producto) {
         final cantidad = producto['cantidad'] as int;
         final precioUnitario = (producto['precio_unitario'] as num).toDouble();
         return {
@@ -48,18 +106,14 @@ class PayService {
 
       await _db.from('pedido_detalle').insert(pedidoDetalles);
 
-      for (final producto in productos) {
+      // Descontar stock y notificar
+      for (final producto in productosDisponibles) {
         final productoId = producto['producto_id'] as String;
         final cantidadVendida = producto['cantidad'] as int;
         final nombreProducto = producto['nombre'].toString();
 
-        final productoActual = await _db
-            .from('producto')
-            .select('stock')
-            .eq('id', productoId)
-            .single();
-
-        final stockActual = (productoActual['stock'] as int?) ?? 0;
+        final dbProduct = stockMap[productoId];
+        final stockActual = dbProduct != null ? (dbProduct['stock'] as int) : 0;
         final stockNuevo = (stockActual - cantidadVendida).clamp(0, 99999);
 
         await _db.rpc(
@@ -79,7 +133,14 @@ class PayService {
         );
       }
 
-      return pedidoId;
+      return PedidoResult(
+        pedidoId: pedidoId,
+        exitoTotal: productosAgotados.isEmpty,
+        productosAgotadosNombres: productosAgotados.map((p) => p['nombre'].toString()).toList(),
+        productosCompradosNombres: productosDisponibles.map((p) => p['nombre'].toString()).toList(),
+        productosCompradosIds: productosDisponibles.map((p) => p['producto_id'].toString()).toList(),
+        totalDisponibles: totalDisponibles,
+      );
     } catch (e) {
       throw Exception('Error al crear el pedido: $e');
     }
@@ -180,4 +241,22 @@ class PayService {
       throw Exception('Error al vaciar el carrito: $e');
     }
   }
+}
+
+class PedidoResult {
+  final String? pedidoId;
+  final bool exitoTotal;
+  final List<String> productosAgotadosNombres;
+  final List<String> productosCompradosNombres;
+  final List<String> productosCompradosIds;
+  final double totalDisponibles;
+
+  PedidoResult({
+    this.pedidoId,
+    required this.exitoTotal,
+    required this.productosAgotadosNombres,
+    required this.productosCompradosNombres,
+    required this.productosCompradosIds,
+    required this.totalDisponibles,
+  });
 }

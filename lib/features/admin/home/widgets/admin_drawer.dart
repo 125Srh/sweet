@@ -135,11 +135,11 @@ class AdminDrawer extends StatelessWidget {
               );
 
               if (confirmar == true && context.mounted) {
-                Navigator.pop(context);
                 try {
                   await Supabase.instance.client.auth.signOut();
-                  if (!context.mounted) return;
-                  context.go('/login');
+                  if (context.mounted) {
+                    context.go('/login');
+                  }
                 } catch (e) {
                   debugPrint('❌ [DRAWER] Error al cerrar sesión: $e');
                 }

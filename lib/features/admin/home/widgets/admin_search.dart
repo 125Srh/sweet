@@ -14,10 +14,17 @@ class AdminSearch extends StatelessWidget {
         onChanged: (v) => provider.searchQuery = v,
         decoration: InputDecoration(
           hintText: 'Buscar por nombre',
-          prefixIcon: const Icon(Icons.search),
+          prefixIcon: const Icon(Icons.search, color: pinkColor),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: pinkColor),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: pinkColor, width: 1.0),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFD81B60), width: 1.5),
           ),
         ),
       ),

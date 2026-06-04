@@ -58,7 +58,7 @@ class PayProvider extends ChangeNotifier {
 
     try {
       // 1. Crear el pedido
-      final pedidoId = await PayService.crearPedido(
+      final result = await PayService.crearPedido(
         usuarioId: _userId!,
         subtotal: subtotal,
         envio: envio,
@@ -70,42 +70,56 @@ class PayProvider extends ChangeNotifier {
         productos: productos,
       );
 
-      // 2. ← FIX: eliminar solo los productos pagados
-      final productoIds = productos
-          .map((p) => p['producto_id'].toString())
-          .toList();
-      await PayService.eliminarItemsPagados(_userId!, productoIds);
-
-      // 3. Obtener nombre del cliente
-      final usuarioRes = await Supabase.instance.client
-          .from('usuario')
-          .select('nombre, apellido')
-          .eq('id', _userId!)
-          .maybeSingle();
-
-      final nombre = usuarioRes != null
-          ? '${usuarioRes['nombre'] ?? ''} ${usuarioRes['apellido'] ?? ''}'
-                .trim()
-          : 'Cliente';
-
-      // 4. Crear notificación de venta
-      try {
-        await Supabase.instance.client.from('notificaciones').insert({
-          'tipo': 'nueva_venta',
-          'titulo': 'Nueva venta realizada',
-          'mensaje':
-              '$nombre realizó un pedido por Bs. ${total.toStringAsFixed(2)}',
-          'leida': false,
-        });
-        print('✅ Notificación de venta creada');
-      } catch (e) {
-        print('❌ Error creando notificación de venta: $e');
+      // 2. Eliminar del carrito solo los productos pagados exitosamente
+      if (result.productosCompradosIds.isNotEmpty) {
+        await PayService.eliminarItemsPagados(_userId!, result.productosCompradosIds);
       }
 
-      _successMessage = '¡Pago exitoso! Pedido #${pedidoId.substring(0, 8)}';
-      notifyListeners();
+      // 3. Crear notificación de venta si se compró al menos un producto
+      if (result.pedidoId != null) {
+        final usuarioRes = await Supabase.instance.client
+            .from('usuario')
+            .select('nombre, apellido')
+            .eq('id', _userId!)
+            .maybeSingle();
 
-      return true;
+        final nombre = usuarioRes != null
+            ? '${usuarioRes['nombre'] ?? ''} ${usuarioRes['apellido'] ?? ''}'
+                  .trim()
+            : 'Cliente';
+
+        try {
+          await Supabase.instance.client.from('notificaciones').insert({
+            'tipo': 'nueva_venta',
+            'titulo': 'Nueva venta realizada',
+            'mensaje':
+                '$nombre realizó un pedido por Bs. ${result.totalDisponibles.toStringAsFixed(2)}',
+            'leida': false,
+          });
+          print('✅ Notificación de venta creada');
+        } catch (e) {
+          print('❌ Error creando notificación de venta: $e');
+        }
+      }
+
+      // 4. Evaluar resultado final del stock
+      if (result.exitoTotal) {
+        _successMessage = '¡Pago exitoso! Pedido #${result.pedidoId!.substring(0, 8)}';
+        notifyListeners();
+        return true;
+      } else {
+        if (result.pedidoId != null) {
+          // Compra parcial exitosa, algunos agotados
+          final agotadosStr = result.productosAgotadosNombres.join(', ');
+          _errorMessage = 'ERROR DE COMPRA: PRODUCTO = $agotadosStr AGOTADO. Los otros productos se compraron con normalidad.';
+        } else {
+          // Ningún producto comprado (todos agotados)
+          final agotadosStr = result.productosAgotadosNombres.join(', ');
+          _errorMessage = 'ERROR DE PAGO PRODUCTO = $agotadosStr AGOTADO';
+        }
+        notifyListeners();
+        return false;
+      }
     } catch (e) {
       _errorMessage = 'Error al procesar el pago: ${e.toString()}';
       notifyListeners();
