@@ -44,10 +44,3 @@ La inicialización de Supabase está **hardcodeada** en el `main()`:
 
 > Nota: si planeas publicar el proyecto o compartirlo, se recomienda mover `url`/`anonKey` a un archivo de configuración (por ejemplo `.env`) para evitar credenciales en el repo.
 
-### 3) Variables / credenciales
-
-En este repo no existe actualmente un archivo de tipo `.env` para Supabase.
-Si agregas uno, deberíamos actualizar:
-
-- `lib/main.dart` (cargar valores desde el archivo de configuración)
-- `.gitignore` (excluir el archivo `.env`)
