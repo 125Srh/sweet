@@ -1,5 +1,4 @@
 import 'package:supabase/supabase.dart';
-import 'dart:convert';
 
 void main() async {
   final supabase = SupabaseClient(
@@ -8,17 +7,13 @@ void main() async {
   );
 
   try {
-    final response = await supabase
-        .from('producto')
-        .select()
-        .limit(1);
-
-    if (response.isNotEmpty) {
-        print(response.first.keys.toList());
-    } else {
-        print('No hay productos');
-    }
+    print('Testing descontar_stock RPC...');
+    final response = await supabase.rpc('descontar_stock', params: {
+      'p_producto_id': '00000000-0000-0000-0000-000000000000',
+      'p_cantidad': 0,
+    });
+    print('RPC Success, result: $response');
   } catch (e) {
-    print('Error: $e');
+    print('RPC Error: $e');
   }
 }
