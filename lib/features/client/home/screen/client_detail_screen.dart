@@ -119,7 +119,10 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
         child: SizedBox(
           width: double.infinity,
-          child: SwipeToCartButton(onConfirmed: _agregarAlCarrito),
+          child: SwipeToCartButton(
+          stock: (widget.product['stock'] as int?) ?? 0,
+          onConfirmed: _agregarAlCarrito,
+        ),
         ),
       ),
       body: SingleChildScrollView(
