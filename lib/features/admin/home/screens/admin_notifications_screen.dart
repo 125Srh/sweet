@@ -340,8 +340,13 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
                   notificacion: n,
                   tiempo: _formatearFecha(n['creada_en']),
                   onTap: () => _abrirDetalle(n),
-                  onEliminar: () =>
-                      _service.eliminarNotificacion(n['id'].toString()),
+                  onEliminar: () {
+                    setState(() {
+                      _notificaciones.removeWhere((element) => element['id'].toString() == n['id'].toString());
+                      _noLeidas = _notificaciones.where((element) => element['leida'] == false).length;
+                    });
+                    _service.eliminarNotificacion(n['id'].toString());
+                  },
                 );
               },
             ),

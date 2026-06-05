@@ -90,7 +90,6 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
     'en_preparacion',
     'listo',
     'enviado',
-    'recibido',
     'cancelado',
   ];
 
