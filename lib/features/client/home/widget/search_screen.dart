@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../provider/client_provider.dart';
+import 'package:go_router/go_router.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -52,6 +53,10 @@ class _SearchScreenState extends State<SearchScreen> {
               itemBuilder: (context, index) {
                 final product = results[index];
                 return ListTile(
+                  onTap: () {
+                    final id = product['id']?.toString() ?? '';
+                    context.push('/client/producto/$id', extra: product);
+                  },
                   leading: Container(
                     width: 50,
                     height: 50,
