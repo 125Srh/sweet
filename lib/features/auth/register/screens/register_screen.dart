@@ -137,7 +137,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         children: [
                           _input(_nombreController, 'Nombre usuario'),
                           _input(_apellidoController, 'Apellido'),
-                          _input(_emailController, 'Correo electrónico'),
+                          _emailInput(), // 🔥 CAMBIADO: ahora usa validación de 50 caracteres
                           _input(_telefonoController, 'Teléfono'),
                           _input(_direccionController, 'Dirección'),
 
@@ -162,7 +162,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       color: Colors.white,
                                     )
                                   : const Text(
-                                      'Registrarmee',
+                                      'Registrarme',
                                       style: TextStyle(color: Colors.white),
                                     ),
                             ),
@@ -197,38 +197,116 @@ class _RegisterScreenState extends State<RegisterScreen> {
       padding: const EdgeInsets.only(bottom: 10),
       child: TextFormField(
         controller: c,
-        decoration: InputDecoration(labelText: label),
-        validator: (v) => v!.isEmpty ? 'Campo requerido' : null,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        validator: (v) {
+          if (v == null || v.isEmpty) {
+            return 'Campo requerido';
+          }
+          if (label == 'Teléfono') {
+            if (v.length < 8) {
+              return 'El teléfono debe tener al menos 8 dígitos';
+            }
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  // 🔥 NUEVO: Widget específico para email con validación de 50 caracteres
+  Widget _emailInput() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextFormField(
+        controller: _emailController,
+        keyboardType: TextInputType.emailAddress,
+        decoration: InputDecoration(
+          labelText: 'Correo electrónico',
+          hintText: 'tu@email.com',
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) {
+            return '⚠ Por favor ingresa tu correo electrónico';
+          }
+          if (value.trim().length < 6) {
+            return '⚠ El correo es demasiado corto';
+          }
+          // 🔥 CAMBIADO DE 30 A 50 🔥
+          if (value.trim().length > 50) {
+            return '⚠ Máximo 50 caracteres';
+          }
+          final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+          if (!emailRegex.hasMatch(value.trim())) {
+            return '⚠ Ingresa un correo válido (ejemplo@correo.com)';
+          }
+          return null;
+        },
       ),
     );
   }
 
   Widget _passwordField() {
-    return TextFormField(
-      controller: _passwordController,
-      obscureText: _obscurePassword,
-      decoration: InputDecoration(
-        labelText: 'Contraseña',
-        suffixIcon: IconButton(
-          icon: Icon(
-            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextFormField(
+        controller: _passwordController,
+        obscureText: _obscurePassword,
+        decoration: InputDecoration(
+          labelText: 'Contraseña',
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          suffixIcon: IconButton(
+            icon: Icon(
+              _obscurePassword ? Icons.visibility_off : Icons.visibility,
+            ),
+            onPressed: () =>
+                setState(() => _obscurePassword = !_obscurePassword),
           ),
-          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
         ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return '⚠ Ingresa tu contraseña';
+          }
+          if (value.length < 6) {
+            return '⚠ La contraseña debe tener al menos 6 caracteres';
+          }
+          return null;
+        },
       ),
     );
   }
 
   Widget _confirmPasswordField() {
-    return TextFormField(
-      controller: _confirmPasswordController,
-      obscureText: _obscureConfirm,
-      decoration: InputDecoration(
-        labelText: 'Confirmar contraseña',
-        suffixIcon: IconButton(
-          icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),
-          onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextFormField(
+        controller: _confirmPasswordController,
+        obscureText: _obscureConfirm,
+        decoration: InputDecoration(
+          labelText: 'Confirmar contraseña',
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          suffixIcon: IconButton(
+            icon: Icon(
+              _obscureConfirm ? Icons.visibility_off : Icons.visibility,
+            ),
+            onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+          ),
         ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return '⚠ Confirma tu contraseña';
+          }
+          if (value.length < 6) {
+            return '⚠ La contraseña debe tener al menos 6 caracteres';
+          }
+          if (value != _passwordController.text) {
+            return '⚠ Las contraseñas no coinciden';
+          }
+          return null;
+        },
       ),
     );
   }
