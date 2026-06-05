@@ -76,17 +76,17 @@ class _NotificationBellState extends State<NotificationBell>
           onMarcarTodas: () {
             provider.marcarTodasLeidas();
           },
-          // 👇 navega al detalle del producto
           onVerProducto: (notif) {
             _cerrarPanel();
             final producto = notif['producto'];
             if (producto != null) {
-              // Armamos el map completo para ClientDetailScreen
               final productData = {
                 'id': notif['producto_id'],
                 'nombre': producto['nombre'],
                 'imagen_url': producto['imagen_url'],
                 'precio': producto['precio'],
+                'stock': producto['stock'],
+                'descripcion': producto['descripcion'], // ✅
               };
               context.push(
                 '/client/producto/${notif['producto_id']}',
