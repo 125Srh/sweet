@@ -262,18 +262,21 @@ class AdminsProvider extends ChangeNotifier {
   }
 
   Future<void> eliminarProducto(dynamic id) async {
-    try {
-      isLoading = true;
-      notifyListeners();
-      await _service.eliminarProducto(id);
-      await cargarProductos();
-    } catch (e) {
-      print("❌ Error eliminando producto: $e");
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
+  // ✅ Remover localmente primero para UI instantánea
+  productos.removeWhere((p) => p['id'].toString() == id.toString());
+  notifyListeners();
+
+  try {
+    await _service.eliminarProducto(id);
+    // No llamar cargarProductos() — el realtime ya escucha DELETE
+    // Si no hay realtime activo, descomentar:
+    // await cargarProductos();
+  } catch (e) {
+    print("❌ Error eliminando producto: $e");
+    // Revertir si falla
+    await cargarProductos();
   }
+}
 
   Future<bool> verificarPedidosPendientes(dynamic productoId) async {
     try {

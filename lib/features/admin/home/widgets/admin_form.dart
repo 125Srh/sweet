@@ -47,8 +47,8 @@ class _AdminFormState extends State<AdminForm> {
       _precio.text = p['precio'].toString();
       _precioAdquisicion.text = p['precio_venta']?.toString() ?? '';
       _imagen.text = p['imagen_url'] ?? '';
-      categoriaId = p['categoria_id'];
-      marcaId = p['marca_id'];
+      categoriaId = p['categoria_id']?.toString(); 
+      marcaId = p['marca_id']?.toString();         
       _stockValue = (p['stock'] as int?) ?? 0;
     }
   }

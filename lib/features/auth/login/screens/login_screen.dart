@@ -27,7 +27,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  bool _obscurePassword = true; // 👁️ Controla el ojito
+  bool _obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -99,9 +99,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       child: Column(
                         children: [
-                          // 📧 Campo Email
+                          // 📧 Campo Email CON LÍMITE DE 50 CARACTERES
                           TextFormField(
                             controller: widget.emailController,
+                            maxLength:
+                                50, // ✅ BLOQUEA FÍSICAMENTE DESPUÉS DE 50
+                            buildCounter:
+                                (
+                                  context, {
+                                  required currentLength,
+                                  required isFocused,
+                                  maxLength,
+                                }) => null, // Oculta el contador
                             decoration: InputDecoration(
                               labelText: 'Correo electrónico',
                               hintText: 'tu@email.com',
@@ -157,8 +166,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               if (value.trim().length < 6) {
                                 return '⚠ El correo es demasiado corto';
                               }
-                              if (value.trim().length > 30) {
-                                return '⚠ Máximo 30 caracteres';
+                              if (value.trim().length > 50) {
+                                return '⚠ Máximo 50 caracteres';
                               }
                               final emailRegex = RegExp(
                                 r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
@@ -171,11 +180,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // 🔒 Campo Contraseña CON OJITO 👁️
+                          // 🔒 Campo Contraseña CON OJITO
                           TextFormField(
                             controller: widget.passwordController,
-                            obscureText:
-                                _obscurePassword, // 👈 Controlado por el ojito
+                            obscureText: _obscurePassword,
                             decoration: InputDecoration(
                               labelText: 'Contraseña',
                               hintText: '••••••••',

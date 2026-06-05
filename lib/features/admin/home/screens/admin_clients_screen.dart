@@ -1,7 +1,7 @@
 // lib/features/admin/home/screens/admin_clients_screen.dart
 import 'package:flutter/material.dart';
 import '../service/admin_service.dart';
-import '../widgets/admin_drawer.dart'; // ← importar el drawer
+import '../widgets/admin_drawer.dart';
 
 class AdminClientsScreen extends StatefulWidget {
   const AdminClientsScreen({super.key});
@@ -24,6 +24,7 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
   @override
   void initState() {
     super.initState();
+    _cargarClientes();
     _service.streamClientes().listen((lista) {
       if (!mounted) return;
       setState(() {
@@ -38,6 +39,21 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _cargarClientes() async {
+    final lista = await _service.getClientes();
+    if (mounted) {
+      setState(() {
+        _clientes = lista;
+        _aplicarFiltro(_searchCtrl.text);
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _refreshClientes() async {
+    await _cargarClientes();
   }
 
   void _aplicarFiltro(String texto) {
@@ -114,12 +130,10 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF0F5),
-      // ← Drawer agregado aquí
       drawer: const AdminDrawer(selectedIndex: 1),
       appBar: AppBar(
         backgroundColor: _pink,
         elevation: 0,
-        // ← Hamburguesa en lugar de flecha
         leading: Builder(
           builder: (ctx) => IconButton(
             icon: const Icon(Icons.menu, color: Colors.white),
@@ -199,40 +213,47 @@ class _AdminClientsScreenState extends State<AdminClientsScreen> {
                       Expanded(
                         child: _filtrados.isEmpty
                             ? _emptyState()
-                            : ListView.builder(
-                                padding: const EdgeInsets.all(16),
-                                itemCount: _filtrados.length,
-                                itemBuilder: (_, i) {
-                                  final cliente = _filtrados[i];
+                            : RefreshIndicator(
+                                onRefresh: _refreshClientes,
+                                color: _pink,
+                                backgroundColor: Colors.white,
+                                child: ListView.builder(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  padding: const EdgeInsets.all(16),
+                                  itemCount: _filtrados.length,
+                                  itemBuilder: (_, i) {
+                                    final cliente = _filtrados[i];
 
-                                  if (_filtroEstado != 'todos') {
-                                    return FutureBuilder<String>(
-                                      future: _service.getEstadoCliente(
-                                        cliente['id'].toString(),
-                                        cliente['created_at'] ?? '',
+                                    if (_filtroEstado != 'todos') {
+                                      return FutureBuilder<String>(
+                                        future: _service.getEstadoCliente(
+                                          cliente['id'].toString(),
+                                          cliente['created_at'] ?? '',
+                                        ),
+                                        builder: (context, snap) {
+                                          if (!snap.hasData)
+                                            return const SizedBox();
+                                          if (snap.data != _filtroEstado)
+                                            return const SizedBox();
+                                          return _ClienteTile(
+                                            cliente: cliente,
+                                            fecha: _formatearFecha(
+                                              cliente['created_at'],
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    }
+
+                                    return _ClienteTile(
+                                      cliente: cliente,
+                                      fecha: _formatearFecha(
+                                        cliente['created_at'],
                                       ),
-                                      builder: (context, snap) {
-                                        if (!snap.hasData)
-                                          return const SizedBox();
-                                        if (snap.data != _filtroEstado)
-                                          return const SizedBox();
-                                        return _ClienteTile(
-                                          cliente: cliente,
-                                          fecha: _formatearFecha(
-                                            cliente['created_at'],
-                                          ),
-                                        );
-                                      },
                                     );
-                                  }
-
-                                  return _ClienteTile(
-                                    cliente: cliente,
-                                    fecha: _formatearFecha(
-                                      cliente['created_at'],
-                                    ),
-                                  );
-                                },
+                                  },
+                                ),
                               ),
                       ),
                     ],

@@ -26,7 +26,9 @@ class NotificationProvider extends ChangeNotifier {
             producto (
               nombre,
               imagen_url,
-              precio
+              precio,
+              stock,
+              descripcion
             )
           ''')
           .eq('usuario_id', userId)

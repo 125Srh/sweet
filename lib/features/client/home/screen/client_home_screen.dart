@@ -47,10 +47,10 @@ class _ClientHomeScreenState extends State<ClientHomeScreen> {
   }
 
   void _irAlCarrito() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const CartScreen()),
-    ).then((_) => setState(() => _currentNav = 0));
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => CartScreen()), 
+  ).then((_) => setState(() => _currentNav = 0));
   }
 
   void _irAFavoritos() {
