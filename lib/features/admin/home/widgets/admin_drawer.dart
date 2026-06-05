@@ -1,7 +1,6 @@
 // lib/features/admin/home/widgets/admin_drawer.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Índices del menú lateral admin:
 /// 0 Productos · 1 Clientes · 2 Notificaciones · 3 Reportes · 4 Pedidos
@@ -28,10 +27,7 @@ class AdminDrawer extends StatelessWidget {
     }) {
       final itemColor = color ?? pinkColor;
       return ListTile(
-        leading: Icon(
-          icon,
-          color: itemColor,
-        ),
+        leading: Icon(icon, color: itemColor),
         title: Text(
           title,
           style: TextStyle(
@@ -106,46 +102,7 @@ class AdminDrawer extends StatelessWidget {
           const Spacer(),
           const Divider(),
 
-          item(
-            Icons.logout,
-            'Cerrar Sesión',
-            color: Colors.red,
-            onTap: () async {
-              final confirmar = await showDialog<bool>(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text('Cerrar sesión'),
-                  content: const Text(
-                    '¿Estás segura que deseas salir de Sweet?',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx, false),
-                      child: const Text('Cancelar'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx, true),
-                      child: const Text(
-                        'Salir',
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-
-              if (confirmar == true && context.mounted) {
-                try {
-                  await Supabase.instance.client.auth.signOut();
-                  if (context.mounted) {
-                    context.go('/login');
-                  }
-                } catch (e) {
-                  debugPrint('❌ [DRAWER] Error al cerrar sesión: $e');
-                }
-              }
-            },
-          ),
+          // ❌ ELIMINADO: "Cerrar Sesión"
         ],
       ),
     );
