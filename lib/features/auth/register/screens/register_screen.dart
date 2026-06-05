@@ -137,7 +137,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         children: [
                           _input(_nombreController, 'Nombre usuario'),
                           _input(_apellidoController, 'Apellido'),
-                          _emailInput(), // 🔥 CAMBIADO: ahora usa validación de 50 caracteres
+                          _emailInput(), // 🔥 AHORA CON maxLength: 50
                           _input(_telefonoController, 'Teléfono'),
                           _input(_direccionController, 'Dirección'),
 
@@ -216,12 +216,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // 🔥 NUEVO: Widget específico para email con validación de 50 caracteres
+  // 🔥 CAMPO EMAIL CON LÍMITE FÍSICO DE 50 CARACTERES
   Widget _emailInput() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: TextFormField(
         controller: _emailController,
+        maxLength: 50, // ✅ BLOQUEA FÍSICAMENTE DESPUÉS DE 50
+        buildCounter:
+            (
+              context, {
+              required currentLength,
+              required isFocused,
+              maxLength,
+            }) => null, // Oculta el contador
         keyboardType: TextInputType.emailAddress,
         decoration: InputDecoration(
           labelText: 'Correo electrónico',

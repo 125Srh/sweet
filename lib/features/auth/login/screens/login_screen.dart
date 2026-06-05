@@ -99,9 +99,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       child: Column(
                         children: [
-                          // 📧 Campo Email
+                          // 📧 Campo Email CON LÍMITE DE 50 CARACTERES
                           TextFormField(
                             controller: widget.emailController,
+                            maxLength:
+                                50, // ✅ BLOQUEA FÍSICAMENTE DESPUÉS DE 50
+                            buildCounter:
+                                (
+                                  context, {
+                                  required currentLength,
+                                  required isFocused,
+                                  maxLength,
+                                }) => null, // Oculta el contador
                             decoration: InputDecoration(
                               labelText: 'Correo electrónico',
                               hintText: 'tu@email.com',
@@ -157,7 +166,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               if (value.trim().length < 6) {
                                 return '⚠ El correo es demasiado corto';
                               }
-                              // 🔥 CAMBIADO DE 30 A 50 🔥
                               if (value.trim().length > 50) {
                                 return '⚠ Máximo 50 caracteres';
                               }
