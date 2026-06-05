@@ -92,6 +92,10 @@ class _ReporteVentasScreenState extends State<ReporteVentasScreen> {
     }
   }
 
+  Future<void> _refreshReportes() async {
+    await _cargarReportes();
+  }
+
   Future<void> _imprimirReporte() async {
     if (_resumen == null) return;
     final pdf = pw.Document();
@@ -196,12 +200,10 @@ class _ReporteVentasScreenState extends State<ReporteVentasScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF0F5),
-      // ← drawer con índice correcto
       drawer: const AdminDrawer(selectedIndex: 3),
       appBar: AppBar(
         backgroundColor: _pink,
         elevation: 0,
-        // ← hamburguesa en lugar de flecha o AdminAppBar
         leading: Builder(
           builder: (ctx) => IconButton(
             icon: const Icon(Icons.menu, color: Colors.white),
@@ -225,58 +227,66 @@ class _ReporteVentasScreenState extends State<ReporteVentasScreen> {
             ),
         ],
       ),
-      body: Column(
-        children: [
-          _buildFiltros(),
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFFFF69B4)),
-                  )
-                : _errorMessage != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.error, color: Colors.red, size: 60),
-                        const SizedBox(height: 16),
-                        Text(_errorMessage!),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _cargarReportes,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFF69B4),
+      body: RefreshIndicator(
+        onRefresh: _refreshReportes,
+        color: _pink,
+        backgroundColor: Colors.white,
+        child: Column(
+          children: [
+            _buildFiltros(),
+            Expanded(
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFFFF69B4),
+                      ),
+                    )
+                  : _errorMessage != null
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error, color: Colors.red, size: 60),
+                          const SizedBox(height: 16),
+                          Text(_errorMessage!),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _cargarReportes,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFF69B4),
+                            ),
+                            child: const Text('Reintentar'),
                           ),
-                          child: const Text('Reintentar'),
-                        ),
-                      ],
+                        ],
+                      ),
+                    )
+                  : _reportes.isEmpty
+                  ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.bar_chart, size: 60, color: Colors.grey),
+                          SizedBox(height: 16),
+                          Text('No hay ventas registradas para este periodo'),
+                        ],
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          _buildGrafica(),
+                          const SizedBox(height: 24),
+                          _buildTabla(),
+                          const SizedBox(height: 24),
+                          if (_resumen != null) _buildResumen(),
+                        ],
+                      ),
                     ),
-                  )
-                : _reportes.isEmpty
-                ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.bar_chart, size: 60, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text('No hay ventas registradas para este periodo'),
-                      ],
-                    ),
-                  )
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        _buildGrafica(),
-                        const SizedBox(height: 24),
-                        _buildTabla(),
-                        const SizedBox(height: 24),
-                        if (_resumen != null) _buildResumen(),
-                      ],
-                    ),
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

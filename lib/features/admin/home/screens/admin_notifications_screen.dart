@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../service/admin_service.dart';
-import '../widgets/admin_drawer.dart'; // ← agregado
+import '../widgets/admin_drawer.dart';
 
 class AdminNotificationsScreen extends StatefulWidget {
   const AdminNotificationsScreen({super.key});
@@ -24,6 +24,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
   @override
   void initState() {
     super.initState();
+    _cargarNotificaciones();
     _service.streamNotificacionesVentas().listen((lista) {
       if (!mounted) return;
       setState(() {
@@ -32,6 +33,29 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
         _loading = false;
       });
     });
+  }
+
+  Future<void> _cargarNotificaciones() async {
+    try {
+      final lista = await _service.getNotificaciones();
+      final ventas = lista.where((n) => n['tipo'] == 'nueva_venta').toList();
+      if (mounted) {
+        setState(() {
+          _notificaciones = ventas;
+          _noLeidas = ventas.where((n) => n['leida'] == false).length;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Error cargando notificaciones: $e');
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  Future<void> _refreshNotificaciones() async {
+    await _cargarNotificaciones();
   }
 
   String _formatearFecha(String? fecha) {
@@ -46,9 +70,63 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
     return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
   }
 
+  Future<void> _eliminarNotificacion(Map<String, dynamic> notificacion) async {
+    // Mostrar diálogo de confirmación
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar notificación'),
+        content: const Text('¿Estás segura de eliminar esta notificación?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      // Eliminar de la base de datos
+      await _service.eliminarNotificacion(notificacion['id'].toString());
+
+      // Eliminar de la lista local
+      setState(() {
+        _notificaciones.removeWhere((n) => n['id'] == notificacion['id']);
+        _noLeidas = _notificaciones.where((n) => n['leida'] == false).length;
+      });
+
+      // Mostrar mensaje de éxito
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Notificación eliminada'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _abrirDetalle(Map<String, dynamic> notificacion) async {
     await _service.marcarComoLeida(notificacion['id'].toString());
     if (!mounted) return;
+
+    // Actualizar estado local
+    setState(() {
+      final index = _notificaciones.indexWhere(
+        (n) => n['id'] == notificacion['id'],
+      );
+      if (index != -1) {
+        _notificaciones[index]['leida'] = true;
+      }
+      _noLeidas = _notificaciones.where((n) => n['leida'] == false).length;
+    });
 
     List<Map<String, dynamic>> detalles = [];
     String? pedidoInfo;
@@ -279,7 +357,6 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
       appBar: AppBar(
         backgroundColor: _pink,
         elevation: 0,
-        // ← hamburguesa en lugar de flecha
         leading: Builder(
           builder: (ctx) => IconButton(
             icon: const Icon(Icons.menu, color: Colors.white),
@@ -319,7 +396,15 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
         actions: [
           if (_noLeidas > 0)
             TextButton(
-              onPressed: _service.marcarTodasComoLeidas,
+              onPressed: () async {
+                await _service.marcarTodasComoLeidas();
+                setState(() {
+                  for (var n in _notificaciones) {
+                    n['leida'] = true;
+                  }
+                  _noLeidas = 0;
+                });
+              },
               child: const Text(
                 'Marcar todas',
                 style: TextStyle(color: Colors.white, fontSize: 12),
@@ -331,51 +416,53 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
           ? const Center(child: CircularProgressIndicator(color: _pink))
           : _notificaciones.isEmpty
           ? _emptyState()
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _notificaciones.length,
-              itemBuilder: (_, i) {
-                final n = _notificaciones[i];
-                return _VentaTile(
-                  notificacion: n,
-                  tiempo: _formatearFecha(n['creada_en']),
-                  onTap: () => _abrirDetalle(n),
-                  onEliminar: () {
-                    setState(() {
-                      _notificaciones.removeWhere((element) => element['id'].toString() == n['id'].toString());
-                      _noLeidas = _notificaciones.where((element) => element['leida'] == false).length;
-                    });
-                    _service.eliminarNotificacion(n['id'].toString());
-                  },
-                );
-              },
+          : RefreshIndicator(
+              onRefresh: _refreshNotificaciones,
+              color: _pink,
+              backgroundColor: Colors.white,
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                itemCount: _notificaciones.length,
+                itemBuilder: (_, i) {
+                  final n = _notificaciones[i];
+                  return _VentaTile(
+                    notificacion: n,
+                    tiempo: _formatearFecha(n['creada_en']),
+                    onTap: () => _abrirDetalle(n),
+                    onEliminar: () => _eliminarNotificacion(n),
+                  );
+                },
+              ),
             ),
     );
   }
 
-  Widget _emptyState() => Center(
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.notifications_none, size: 70, color: Colors.grey[300]),
-        const SizedBox(height: 16),
-        const Text(
-          'Sin notificaciones de ventas',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.black45,
-            fontWeight: FontWeight.w500,
+  Widget _emptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.notifications_none, size: 70, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          const Text(
+            'Sin notificaciones de ventas',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black45,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Aquí aparecerán los pedidos\nque realicen los clientes',
-          style: TextStyle(fontSize: 13, color: Colors.grey[400]),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    ),
-  );
+          const SizedBox(height: 8),
+          Text(
+            'Aquí aparecerán los pedidos\nque realicen los clientes',
+            style: TextStyle(fontSize: 13, color: Colors.grey[400]),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────

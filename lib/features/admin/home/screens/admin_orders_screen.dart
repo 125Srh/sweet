@@ -1,7 +1,7 @@
 // lib/features/admin/home/screens/admin_orders_screen.dart
 import 'package:flutter/material.dart';
 import '../service/admin_service.dart';
-import '../widgets/admin_drawer.dart'; // ← agregado
+import '../widgets/admin_drawer.dart';
 
 class AdminOrdersScreen extends StatefulWidget {
   const AdminOrdersScreen({super.key});
@@ -13,6 +13,7 @@ class AdminOrdersScreen extends StatefulWidget {
 class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   final service = AdminService();
   List<Map<String, dynamic>> pedidos = [];
+  bool _isLoading = true;
 
   static const _pink = Color(0xFFFF69B4);
   final softPink = const Color(0xFFFFF0F5);
@@ -24,8 +25,18 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   }
 
   Future<void> cargarPedidos() async {
+    setState(() {
+      _isLoading = true;
+    });
     final res = await service.getPedidos();
-    setState(() => pedidos = res);
+    setState(() {
+      pedidos = res;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _refreshPedidos() async {
+    await cargarPedidos();
   }
 
   Color getColor(String estado) {
@@ -104,7 +115,6 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         ),
         backgroundColor: _pink,
         centerTitle: true,
-        // ← hamburguesa en lugar de flecha
         leading: Builder(
           builder: (ctx) => IconButton(
             icon: const Icon(Icons.menu, color: Colors.white),
@@ -112,268 +122,286 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
           ),
         ),
       ),
-      body: pedidos.isEmpty
-          ? Center(
-              child: Text(
-                'No hay pedidos registrados',
-                style: TextStyle(
-                  color: Colors.grey.shade500,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(10),
-              itemCount: pedidos.length,
-              itemBuilder: (context, index) {
-                final pedido = pedidos[index];
-                final estado = pedido['estado'];
-                final esFinalizado =
-                    estado == 'recibido' || estado == 'cancelado';
-                final cliente = pedido['usuario'] != null
-                    ? "${pedido['usuario']['nombre']} ${pedido['usuario']['apellido']}"
-                    : "Cliente desconocido";
-                final soloNumeros = pedido['id'].toString().replaceAll(
-                  RegExp(r'[^0-9]'),
-                  '',
-                );
-                final numeroPedidoFinal = soloNumeros.length >= 5
-                    ? soloNumeros.substring(0, 5)
-                    : "Orden";
-
-                return Container(
-                  key: ValueKey(pedido['id']),
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.white, softPink.withOpacity(0.4)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.pink.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
+      body: RefreshIndicator(
+        onRefresh: _refreshPedidos,
+        color: _pink,
+        backgroundColor: Colors.white,
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: Color(0xFFFF69B4)),
+              )
+            : pedidos.isEmpty
+            ? Center(
+                child: Text(
+                  'No hay pedidos registrados',
+                  style: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w500,
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: _pink.withOpacity(0.1),
-                                  child: Icon(
-                                    Icons.person,
-                                    color: _pink,
-                                    size: 16,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  cliente,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Text(
-                              "N° $numeroPedidoFinal",
-                              style: TextStyle(
-                                color: Colors.grey.shade500,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                ),
+              )
+            : ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(10),
+                itemCount: pedidos.length,
+                itemBuilder: (context, index) {
+                  final pedido = pedidos[index];
+                  final estado = pedido['estado'];
+                  final esFinalizado =
+                      estado == 'recibido' || estado == 'cancelado';
+                  final cliente = pedido['usuario'] != null
+                      ? "${pedido['usuario']['nombre']} ${pedido['usuario']['apellido']}"
+                      : "Cliente desconocido";
+                  final soloNumeros = pedido['id'].toString().replaceAll(
+                    RegExp(r'[^0-9]'),
+                    '',
+                  );
+                  final numeroPedidoFinal = soloNumeros.length >= 5
+                      ? soloNumeros.substring(0, 5)
+                      : "Orden";
+
+                  return Container(
+                    key: ValueKey(pedido['id']),
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.white, softPink.withOpacity(0.4)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.pink.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
                         ),
-                        const SizedBox(height: 10),
-                        Text(
-                          "Total: Bs. ${pedido['total']}",
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: getColor(estado).withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Icon(
-                                getIcon(estado),
-                                color: getColor(estado),
-                                size: 16,
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: _pink.withOpacity(0.1),
+                                    child: Icon(
+                                      Icons.person,
+                                      color: _pink,
+                                      size: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    cliente,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 6),
                               Text(
-                                estadoLabel(estado),
+                                "N° $numeroPedidoFinal",
                                 style: TextStyle(
-                                  color: getColor(estado),
-                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey.shade500,
                                   fontSize: 12,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Flexible(
-                              flex: 1,
-                              child: SizedBox(
-                                width: double.infinity,
-                                height: 42,
-                                child: ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: _pink,
-                                    foregroundColor: Colors.white,
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
+                          const SizedBox(height: 10),
+                          Text(
+                            "Total: Bs. ${pedido['total']}",
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: getColor(estado).withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  getIcon(estado),
+                                  color: getColor(estado),
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  estadoLabel(estado),
+                                  style: TextStyle(
+                                    color: getColor(estado),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
                                   ),
-                                  onPressed: () =>
-                                      mostrarDetallePedido(pedido['id']),
-                                  icon: const Icon(Icons.visibility, size: 18),
-                                  label: const Text(
-                                    "Ver",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Flexible(
+                                flex: 1,
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  height: 42,
+                                  child: ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _pink,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                    ),
+                                    onPressed: () =>
+                                        mostrarDetallePedido(pedido['id']),
+                                    icon: const Icon(
+                                      Icons.visibility,
+                                      size: 18,
+                                    ),
+                                    label: const Text(
+                                      "Ver",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            Flexible(
-                              flex: 1,
-                              child: esFinalizado
-                                  ? Container(
-                                      height: 42,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: Colors.pink.shade50,
-                                        borderRadius: BorderRadius.circular(14),
-                                        border: Border.all(
-                                          color: Colors.pink.shade100,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            estado == 'cancelado'
-                                                ? Icons.cancel
-                                                : Icons.stars_rounded,
-                                            color: estado == 'cancelado'
-                                                ? Colors.red
-                                                : Colors.pink,
-                                            size: 18,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            estado == 'cancelado'
-                                                ? "Cancelado"
-                                                : "Completado",
-                                            style: TextStyle(
-                                              color: estado == 'cancelado'
-                                                  ? Colors.red
-                                                  : Colors.pink,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  : DropdownButtonFormField<String>(
-                                      key: ValueKey('dropdown_${pedido['id']}'),
-                                      value: estadosAdmin.contains(estado)
-                                          ? estado
-                                          : 'pendiente',
-                                      isExpanded: true,
-                                      decoration: InputDecoration(
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 8,
-                                            ),
-                                        filled: true,
-                                        fillColor: Colors.white,
-                                        enabledBorder: OutlineInputBorder(
+                              const SizedBox(width: 10),
+                              Flexible(
+                                flex: 1,
+                                child: esFinalizado
+                                    ? Container(
+                                        height: 42,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: Colors.pink.shade50,
                                           borderRadius: BorderRadius.circular(
                                             14,
                                           ),
-                                          borderSide: BorderSide(
+                                          border: Border.all(
                                             color: Colors.pink.shade100,
                                           ),
                                         ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            14,
-                                          ),
-                                          borderSide: BorderSide(
-                                            color: _pink,
-                                            width: 1.5,
-                                          ),
-                                        ),
-                                      ),
-                                      onChanged: (value) async {
-                                        if (value == null || value == estado)
-                                          return;
-                                        await service.actualizarEstadoPedido(
-                                          pedido['id'],
-                                          value,
-                                        );
-                                        cargarPedidos();
-                                      },
-                                      items: estadosAdmin
-                                          .map(
-                                            (e) => DropdownMenuItem(
-                                              value: e,
-                                              child: Text(
-                                                estadoLabel(e),
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  fontSize: 13,
-                                                ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              estado == 'cancelado'
+                                                  ? Icons.cancel
+                                                  : Icons.stars_rounded,
+                                              color: estado == 'cancelado'
+                                                  ? Colors.red
+                                                  : Colors.pink,
+                                              size: 18,
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              estado == 'cancelado'
+                                                  ? "Cancelado"
+                                                  : "Completado",
+                                              style: TextStyle(
+                                                color: estado == 'cancelado'
+                                                    ? Colors.red
+                                                    : Colors.pink,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 13,
                                               ),
                                             ),
-                                          )
-                                          .toList(),
-                                    ),
-                            ),
-                          ],
-                        ),
-                      ],
+                                          ],
+                                        ),
+                                      )
+                                    : DropdownButtonFormField<String>(
+                                        key: ValueKey(
+                                          'dropdown_${pedido['id']}',
+                                        ),
+                                        value: estadosAdmin.contains(estado)
+                                            ? estado
+                                            : 'pendiente',
+                                        isExpanded: true,
+                                        decoration: InputDecoration(
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                                vertical: 8,
+                                              ),
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              14,
+                                            ),
+                                            borderSide: BorderSide(
+                                              color: Colors.pink.shade100,
+                                            ),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              14,
+                                            ),
+                                            borderSide: BorderSide(
+                                              color: _pink,
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                        ),
+                                        onChanged: (value) async {
+                                          if (value == null || value == estado)
+                                            return;
+                                          await service.actualizarEstadoPedido(
+                                            pedido['id'],
+                                            value,
+                                          );
+                                          cargarPedidos();
+                                        },
+                                        items: estadosAdmin
+                                            .map(
+                                              (e) => DropdownMenuItem(
+                                                value: e,
+                                                child: Text(
+                                                  estadoLabel(e),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                              ),
+                                            )
+                                            .toList(),
+                                      ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
+      ),
     );
   }
 
