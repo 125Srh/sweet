@@ -16,59 +16,53 @@ class PayService {
     required List<Map<String, dynamic>> productos,
   }) async {
     try {
-      // 1. Consultar el stock actual en base de datos de todos los productos
-      final productIds = productos.map((p) => p['producto_id'].toString()).toList();
-      final productsInDb = await _db
-          .from('producto')
-          .select('id, nombre, stock')
-          .inFilter('id', productIds);
-
-      final stockMap = {
-        for (var p in productsInDb)
-          p['id'].toString(): {
-            'stock': (p['stock'] as int?) ?? 0,
-            'nombre': p['nombre'].toString(),
-          }
-      };
-
-      // 2. Clasificar productos en disponibles y agotados
       final productosDisponibles = <Map<String, dynamic>>[];
       final productosAgotados = <Map<String, dynamic>>[];
 
-      for (final p in productos) {
-        final pId = p['producto_id'].toString();
-        final cant = p['cantidad'] as int;
-        final dbProduct = stockMap[pId];
-        final dbStock = dbProduct != null ? (dbProduct['stock'] as int) : 0;
-        final nombre = dbProduct != null ? dbProduct['nombre'] : (p['nombre'] ?? 'Producto');
+      for (final producto in productos) {
+        final productoId = producto['producto_id'].toString();
+        final cantidad = producto['cantidad'] as int;
+        final nombre = producto['nombre'].toString();
 
-        if (dbStock >= cant) {
-          productosDisponibles.add(p);
+        final resultado = await _db.rpc(
+          'descontar_stock',
+          params: {'p_producto_id': productoId, 'p_cantidad': cantidad},
+        );
+
+        print('🔍 RPC resultado: $resultado | tipo: ${resultado.runtimeType}');
+
+        final bool exito = resultado == true;
+
+        print('🔍 exito: $exito | producto: $nombre');
+
+        if (exito) {
+          productosDisponibles.add(producto);
         } else {
-          productosAgotados.add({
-            ...p,
-            'nombre': nombre,
-          });
+          productosAgotados.add({...producto, 'nombre': nombre});
         }
       }
 
-      // 3. Caso: Ningún producto disponible
-      if (productosAgotados.isNotEmpty && productosDisponibles.isEmpty) {
+      // Ningún producto disponible → no crear pedido
+      if (productosDisponibles.isEmpty) {
         return PedidoResult(
           pedidoId: null,
           exitoTotal: false,
-          productosAgotadosNombres: productosAgotados.map((p) => p['nombre'].toString()).toList(),
+          productosAgotadosNombres: productosAgotados
+              .map((p) => p['nombre'].toString())
+              .toList(),
           productosCompradosNombres: [],
           productosCompradosIds: [],
           totalDisponibles: 0.0,
         );
       }
 
-      // 4. Caso: Hay productos disponibles (pueden ser todos o algunos)
-      final double subtotalDisponibles = productosDisponibles.fold<double>(0, (sum, p) {
-        final cant = p['cantidad'] as int;
-        final precio = (p['precio_unitario'] as num).toDouble();
-        return sum + (cant * precio);
+      // Calcular totales solo de productos disponibles
+      final double subtotalDisponibles = productosDisponibles.fold(0.0, (
+        sum,
+        p,
+      ) {
+        return sum +
+            ((p['cantidad'] as int) * (p['precio_unitario'] as num).toDouble());
       });
       final double totalDisponibles = subtotalDisponibles + envio;
 
@@ -92,43 +86,36 @@ class PayService {
       final pedidoId = pedidoResult['id'].toString();
 
       // Crear detalles del pedido
-      final pedidoDetalles = productosDisponibles.map((producto) {
-        final cantidad = producto['cantidad'] as int;
-        final precioUnitario = (producto['precio_unitario'] as num).toDouble();
+      final pedidoDetalles = productosDisponibles.map((p) {
+        final cantidad = p['cantidad'] as int;
+        final precio = (p['precio_unitario'] as num).toDouble();
         return {
           'pedido_id': pedidoId,
-          'producto_id': producto['producto_id'],
+          'producto_id': p['producto_id'],
           'cantidad': cantidad,
-          'precio_unitario': precioUnitario,
-          'subtotal': cantidad * precioUnitario,
+          'precio_unitario': precio,
+          'subtotal': cantidad * precio,
         };
       }).toList();
 
       await _db.from('pedido_detalle').insert(pedidoDetalles);
 
-      // Descontar stock y notificar
+      // Notificaciones de stock post-descuento
       for (final producto in productosDisponibles) {
-        final productoId = producto['producto_id'] as String;
-        final cantidadVendida = producto['cantidad'] as int;
-        final nombreProducto = producto['nombre'].toString();
+        final productoId = producto['producto_id'].toString();
+        final nombre = producto['nombre'].toString();
 
-        final dbProduct = stockMap[productoId];
-        final stockActual = dbProduct != null ? (dbProduct['stock'] as int) : 0;
-        final stockNuevo = (stockActual - cantidadVendida).clamp(0, 99999);
+        final stockRes = await _db
+            .from('producto')
+            .select('stock')
+            .eq('id', productoId)
+            .single();
 
-        await _db.rpc(
-          'descontar_stock',
-          params: {'p_producto_id': productoId, 'p_cantidad': cantidadVendida},
-        );
-
-        print(
-          '✅ Stock descontado: $nombreProducto | $stockActual → $stockNuevo',
-        );
+        final stockNuevo = (stockRes['stock'] as int?) ?? 0;
 
         await _notificarStockSiNecesario(
           productoId: productoId,
-          nombre: nombreProducto,
-          stockAnterior: stockActual,
+          nombre: nombre,
           stockNuevo: stockNuevo,
         );
       }
@@ -136,12 +123,19 @@ class PayService {
       return PedidoResult(
         pedidoId: pedidoId,
         exitoTotal: productosAgotados.isEmpty,
-        productosAgotadosNombres: productosAgotados.map((p) => p['nombre'].toString()).toList(),
-        productosCompradosNombres: productosDisponibles.map((p) => p['nombre'].toString()).toList(),
-        productosCompradosIds: productosDisponibles.map((p) => p['producto_id'].toString()).toList(),
+        productosAgotadosNombres: productosAgotados
+            .map((p) => p['nombre'].toString())
+            .toList(),
+        productosCompradosNombres: productosDisponibles
+            .map((p) => p['nombre'].toString())
+            .toList(),
+        productosCompradosIds: productosDisponibles
+            .map((p) => p['producto_id'].toString())
+            .toList(),
         totalDisponibles: totalDisponibles,
       );
     } catch (e) {
+      print('❌ Error en crearPedido: $e');
       throw Exception('Error al crear el pedido: $e');
     }
   }
@@ -149,11 +143,10 @@ class PayService {
   static Future<void> _notificarStockSiNecesario({
     required String productoId,
     required String nombre,
-    required int stockAnterior,
     required int stockNuevo,
   }) async {
     try {
-      if (stockNuevo <= 0 && stockAnterior > 0) {
+      if (stockNuevo <= 0) {
         await _db.from('notificaciones').insert({
           'tipo': 'agotado',
           'titulo': '🚨 Producto agotado',
@@ -161,21 +154,7 @@ class PayService {
           'producto_id': productoId,
           'leida': false,
         });
-        return;
-      }
-
-      if (stockNuevo <= 3 && stockNuevo > 0 && stockAnterior > 3) {
-        await _db.from('notificaciones').insert({
-          'tipo': 'stock_bajo',
-          'titulo': '⚠️ Stock bajo',
-          'mensaje': 'Solo quedan $stockNuevo unidades de $nombre',
-          'producto_id': productoId,
-          'leida': false,
-        });
-        return;
-      }
-
-      if (stockNuevo <= 3 && stockNuevo > 0 && stockAnterior <= 3) {
+      } else if (stockNuevo <= 3) {
         await _db.from('notificaciones').insert({
           'tipo': 'stock_bajo',
           'titulo': '⚠️ Stock bajo',
@@ -189,7 +168,6 @@ class PayService {
     }
   }
 
-  // ← FIX: elimina solo los items pagados, no todo el carrito
   static Future<void> eliminarItemsPagados(
     String usuarioId,
     List<String> productoIds,
